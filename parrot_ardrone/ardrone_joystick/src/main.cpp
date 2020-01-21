@@ -17,7 +17,9 @@
 #include "std_msgs/Empty.h"
 #include "std_srvs/Empty.h"
 
-const int PUBLISH_FREQ = 50;
+// Set show_key_number to true to show the button number when it's pressed
+bool show_kew_number {true};
+const int PUBLISH_FREQ {50};
 
 using namespace std;
 
@@ -52,13 +54,14 @@ struct TeleopArDrone
 		}
 
 		// mapping from joystick to velocity
-		float scale = 1;
+		float scale = 2.5;
 
 		twist.linear.y  = scale*joy_msg->axes[0]; // left right
 		twist.linear.x  = scale*joy_msg->axes[1]; // forward, backward
 
 		twist.angular.z = scale*joy_msg->axes[3]; // yaw
 		twist.linear.z  = scale*joy_msg->axes[4]; // up down
+
 
 		// button 10 (L1): dead man switch
 		bool dead_man_pressed = joy_msg->buttons.at(4);
@@ -69,6 +72,100 @@ struct TeleopArDrone
 		// button 0 (select): switch camera mode
 		bool cam_toggle_pressed = joy_msg->buttons.at(6);
 		
+		//=======================
+		// NEW - Show key number
+		//=======================
+		if (show_kew_number)
+		{
+			// button 0 ? (): NEW
+			bool zero_pressed = joy_msg->buttons.at(0);
+			// button 1 ? (): NEW
+			bool one_pressed = joy_msg->buttons.at(1);
+			// button 2 ? (): NEW
+			bool two_pressed = joy_msg->buttons.at(2);
+			// button 3 ? (): NEW
+			bool three_pressed = joy_msg->buttons.at(3);
+			// button 4 ? (): NEW
+			bool four_pressed = joy_msg->buttons.at(4);
+			// button 5 ? (): NEW
+			bool five_pressed = joy_msg->buttons.at(5);
+			// button 6 ? (): NEW
+			bool six_pressed = joy_msg->buttons.at(6);
+			// button 7 ? (): NEW
+			bool seven_pressed = joy_msg->buttons.at(7);
+			// button 8 ? (): NEW
+			bool eight_pressed = joy_msg->buttons.at(8);
+			// button 9 ? (): NEW
+			bool nine_pressed = joy_msg->buttons.at(9);
+			// button 10 ? (): NEW
+			bool ten_pressed = joy_msg->buttons.at(10);
+
+			if (zero_pressed)
+			{
+				ROS_INFO("zero_pressed");
+				zero_pressed = false;
+			}
+			
+			if (one_pressed)
+			{
+				ROS_INFO("one_pressed");
+				one_pressed = false;
+			}
+
+			if (two_pressed)
+			{
+				ROS_INFO("two_pressed");
+				two_pressed = false;
+			}
+
+			if (three_pressed)
+			{
+				ROS_INFO("three_pressed");
+				three_pressed = false;
+			}
+
+			if (four_pressed)
+			{
+				ROS_INFO("four_pressed");
+				four_pressed = false;
+			}
+
+			if (five_pressed)
+			{
+				ROS_INFO("five_pressed");
+				five_pressed = false;
+			}
+
+			if (six_pressed)
+			{
+				ROS_INFO("six_pressed");
+				six_pressed = false;
+			}
+
+			if (seven_pressed)
+			{
+				ROS_INFO("seven_pressed");
+				seven_pressed = false;
+			}
+
+			if (eight_pressed)
+			{
+				ROS_INFO("eight_pressed");
+				eight_pressed = false;
+			}
+
+			if (nine_pressed)
+			{
+				ROS_INFO("nine_pressed");
+				nine_pressed = false;
+			}
+
+			if (ten_pressed)
+			{
+				ROS_INFO("ten_pressed");
+				ten_pressed = false;
+			}
+		} //=============================================================
 		
 		if (!is_flying && dead_man_pressed)
 		{
