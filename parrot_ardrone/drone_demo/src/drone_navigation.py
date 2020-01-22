@@ -190,6 +190,7 @@ if __name__ == '__main__':
   drone = MoveInPatterns()
   try:
       #drone.move_square()
+      drone.landing()
       drone.take_off()
       drone.go_to_goal(0.0, 0.0, 0.03)
       # What is going on???
