@@ -76,13 +76,13 @@ struct TeleopArDrone
 		double Arrows_Y_Axis = joy_msg->axes[7];
 
 		// Mapping from joystick to velocity
-		float scale = 2.5;
+		float scale = 5;
 
 		// Velocity definition
-		twist.linear.y  = scale*LJoy_X_Axis; // joy_msg->axes[0]; // LJoy - Left/Right (Roll)
-		twist.linear.x  = scale*LJoy_Y_Axis; //joy_msg->axes[1]; // LJoy - Up/Down  (Pitch)
-		twist.angular.z = scale*RJoy_X_Axis; //joy_msg->axes[3]; // RJoy - Left/Right (Yaw)
-		twist.linear.z  = scale*RJoy_Y_Axis; //joy_msg->axes[4]; // RJoy - Up/Down  (Elevation)
+		twist.linear.y  = scale*RJoy_X_Axis; // joy_msg->axes[0]; // LJoy - Left/Right (Roll)
+		twist.linear.x  = scale*RJoy_Y_Axis; //joy_msg->axes[1]; // LJoy - Up/Down  (Pitch)
+		twist.angular.z = scale*LJoy_X_Axis; //joy_msg->axes[3]; // RJoy - Left/Right (Yaw)
+		twist.linear.z  = scale*LJoy_Y_Axis; //joy_msg->axes[4]; // RJoy - Up/Down  (Elevation)
 
 		// Toggle Start Button: Taking-off / Landing
 		if (is_flying && Start_Button)
