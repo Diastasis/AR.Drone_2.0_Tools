@@ -22,36 +22,32 @@ using namespace std;
 
 struct TeleopArDrone
 {
+
 	ros::Subscriber joy_sub;
 	ros::Publisher pub_takeoff, pub_land, pub_toggle_state, pub_vel;
+	ros::NodeHandle nh_;
+	ros::ServiceClient srv_cl_cam;
+	std_srvs::Empty srv_empty;
+	geometry_msgs::Twist twist;
 
 	bool got_first_joy_msg;
 	bool is_flying;
 	bool toggle_pressed_in_last_msg;
 	bool cam_toggle_pressed_in_last_msg;
-	std_srvs::Empty srv_empty;
-
-	ros::NodeHandle nh_;
-	geometry_msgs::Twist twist;
-	ros::ServiceClient srv_cl_cam;
-
-	// ros::NodeHandle node;
-
 
 	void joyCb(const sensor_msgs::JoyConstPtr joy_msg)
 	{
+		// Check if the Joystick is compatible
 		if (!got_first_joy_msg)
 		{
 			ROS_INFO("Found joystick with %zu buttons and %zu axes", joy_msg->buttons.size(), joy_msg->axes.size());
 			if (joy_msg->buttons.size() < 11 || joy_msg->axes.size() < 8)
 			{
-				ROS_FATAL("This joystick does not look like a XBOX-Joystick");
+				ROS_FATAL("This joystick does not look like a PS3-Joystick");
 			}
-
 			got_first_joy_msg = true;
 		}
 
-		
 		// Button Definition
 		bool A_Button = joy_msg->buttons.at(0);
 		bool B_Button = joy_msg->buttons.at(1);
@@ -65,7 +61,7 @@ struct TeleopArDrone
 		bool LJoy_Button = joy_msg->buttons.at(9);
 		bool RJoy_Button = joy_msg->buttons.at(10);
 
-		// Axis Definition
+		// Axes Definition
 		double LJoy_X_Axis = joy_msg->axes[0];
 		double LJoy_Y_Axis = joy_msg->axes[1];
 		double L2_Axis = joy_msg->axes[2];
@@ -75,7 +71,7 @@ struct TeleopArDrone
 		double Arrows_X_Axis = joy_msg->axes[6];
 		double Arrows_Y_Axis = joy_msg->axes[7];
 
-		// Mapping from joystick to velocity
+		// Scale the velocity (Joystick response)
 		float scale = 5;
 
 		// Velocity definition
@@ -99,7 +95,7 @@ struct TeleopArDrone
 			pub_takeoff.publish(std_msgs::Empty());
 			pub_takeoff.publish(std_msgs::Empty());
 			is_flying = true;
-			sleep(1);
+			sleep(1); 
 		}
 
 		
@@ -118,14 +114,14 @@ struct TeleopArDrone
 
 	TeleopArDrone()
 	{
-		twist.linear.x = twist.linear.y = twist.linear.z = 0;
-		twist.angular.x = twist.angular.y = twist.angular.z = 0;
-		
 		is_flying = false;
 		got_first_joy_msg = false;
-		
-		joy_sub = nh_.subscribe("/joy", 1,&TeleopArDrone::joyCb, this);
 		toggle_pressed_in_last_msg = cam_toggle_pressed_in_last_msg = false;
+
+		twist.linear.x = twist.linear.y = twist.linear.z = 0;
+		twist.angular.x = twist.angular.y = twist.angular.z = 0;
+
+		joy_sub = nh_.subscribe("/joy", 1,&TeleopArDrone::joyCb, this);
 		
 		pub_takeoff       = nh_.advertise<std_msgs::Empty>("/drone/takeoff",1);
 		pub_land          = nh_.advertise<std_msgs::Empty>("/drone/land",1);
@@ -134,24 +130,23 @@ struct TeleopArDrone
 		srv_cl_cam        = nh_.serviceClient<std_srvs::Empty>("/drone/togglecam",1);
 	}
 
+	// Publish the twist message on the /cmd_vel topic
 	void send_cmd_vel()
 	{
 		pub_vel.publish(twist);
 	}
 };
 
-
+// Main
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "ardrone_teleop");
-	
-	ROS_INFO("Started ArDrone joystick-Teleop");
-	ROS_INFO("Press L1 to toggle emergency-state");
-	ROS_INFO("Press and hold L2 for takeoff");
-	ROS_INFO("Press 'select' to choose camera");
-	
 	TeleopArDrone teleop;
 	ros::Rate pub_rate(PUBLISH_FREQ);
+
+	ROS_INFO("Started ArDrone joystick-Teleop");
+	ROS_INFO("Press [Start] to take-off");
+	ROS_INFO("Toggle [Start] for landing");
 
 	while (teleop.nh_.ok())
 	{
