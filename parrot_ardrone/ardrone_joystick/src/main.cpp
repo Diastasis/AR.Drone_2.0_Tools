@@ -22,7 +22,6 @@ using namespace std;
 
 struct TeleopArDrone
 {
-
 	ros::Subscriber joy_sub;
 	ros::Publisher pub_takeoff, pub_land, pub_toggle_state, pub_vel;
 	ros::NodeHandle nh_;
@@ -123,11 +122,11 @@ struct TeleopArDrone
 
 		joy_sub = nh_.subscribe("/joy", 1,&TeleopArDrone::joyCb, this);
 		
-		pub_takeoff       = nh_.advertise<std_msgs::Empty>("/drone/takeoff",1);
-		pub_land          = nh_.advertise<std_msgs::Empty>("/drone/land",1);
-		pub_toggle_state  = nh_.advertise<std_msgs::Empty>("/drone/reset",1);
+		pub_takeoff       = nh_.advertise<std_msgs::Empty>("/ardrone/takeoff",1);
+		pub_land          = nh_.advertise<std_msgs::Empty>("/ardrone/land",1);
+		pub_toggle_state  = nh_.advertise<std_msgs::Empty>("/ardrone/reset",1);
 		pub_vel           = nh_.advertise<geometry_msgs::Twist>("/cmd_vel",1);
-		srv_cl_cam        = nh_.serviceClient<std_srvs::Empty>("/drone/togglecam",1);
+		srv_cl_cam        = nh_.serviceClient<std_srvs::Empty>("/ardrone/togglecam",1);
 	}
 
 	// Publish the twist message on the /cmd_vel topic
