@@ -251,7 +251,7 @@
     <model name='sjtu_drone'>
       <plugin name='simple_drone' filename='libplugin_drone.so'>
         <bodyName>base_link</bodyName>
-        <imuTopic>/drone/imu</imuTopic>
+        <imuTopic>/ardrone/imu</imuTopic>
         <rollpitchProportionalGain>10.0</rollpitchProportionalGain>
         <rollpitchDifferentialGain>5.0</rollpitchDifferentialGain>
         <rollpitchLimit>0.5</rollpitchLimit>
@@ -401,7 +401,7 @@
           <update_rate>60</update_rate>
           <visualize>1</visualize>
           <plugin name='front_camera' filename='libplugin_ros_cam.so'>
-            <imageTopicName>/drone/front_camera/image_raw</imageTopicName>
+            <imageTopicName>/ardrone/front_camera/image_raw</imageTopicName>
           </plugin>
         </sensor>
         <sensor name='down_camera' type='camera'>
@@ -427,7 +427,7 @@
           <update_rate>15</update_rate>
           <visualize>1</visualize>
           <plugin name='down_camera' filename='libplugin_ros_cam.so'>
-            <imageTopicName>/drone/down_camera/image_raw</imageTopicName>
+            <imageTopicName>/ardrone/down_camera/image_raw</imageTopicName>
           </plugin>
         </sensor>
         <self_collide>0</self_collide>

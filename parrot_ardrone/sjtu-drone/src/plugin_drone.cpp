@@ -179,11 +179,11 @@ void DroneSimpleController::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   }
   
   if (!gt_topic_.empty()){
-      pub_gt_pose_ = node_handle_->advertise<geometry_msgs::Pose>("drone/gt_pose",1024);    
+      pub_gt_pose_ = node_handle_->advertise<geometry_msgs::Pose>("ardrone/gt_pose",1024);    
   }
   
-  pub_gt_vec_ = node_handle_->advertise<geometry_msgs::Twist>("drone/gt_vel", 1024);
-  pub_gt_acc_ = node_handle_->advertise<geometry_msgs::Twist>("drone/gt_acc", 1024);
+  pub_gt_vec_ = node_handle_->advertise<geometry_msgs::Twist>("ardrone/gt_vel", 1024);
+  pub_gt_acc_ = node_handle_->advertise<geometry_msgs::Twist>("ardrone/gt_acc", 1024);
   
   
   if (!switch_mode_topic_.empty()){

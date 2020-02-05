@@ -1,10 +1,37 @@
 <launch>
         <arg name="droneip" default="192.168.1.1" />
         <node name="ardrone_driver" pkg="ardrone_autonomy" type="ardrone_driver" output="screen" args="-ip $(arg droneip)">
-                <param name="navdata_demo" value="False" />
+<!--navdata_demo requires "0" (200Hz) or "1"(15Hz) instead of True/False-->
+                <param name="navdata_demo" value="0" />
                 <param name="realtime_navdata" value="True" />
-                <param name="realtime_video" value="True" />
-                <param name="looprate" value="30" />
+                <param name="looprate" value="50" />
+		<param name="realtime_video" value="True" />
+
+<!--ccess almost all sensor readings, debug values and status reports sent from the AR-Drone by usingSelectiveNavdata.-->
+		<param name="enable_navdata_time" value="False" />
+		<param name="enable_navdata_trims" value="False" />
+		<param name="enable_navdata_rc_references" value="False" />
+		<param name="enable_navdata_pwm" value="False" />              
+		<param name="enable_navdata_altitude" value="False" />
+		<param name="enable_navdata_vision_raw" value="False" />
+		<param name="enable_navdata_vision_of" value="False" />       
+		<param name="enable_navdata_vision" value="False" />        
+		<param name="enable_navdata_vision_perf" value="False" />
+		<param name="enable_navdata_trackers_send" value="False" />
+		<param name="enable_navdata_vision_detect" value="False" />    
+		<param name="enable_navdata_watchdog" value="True" />    
+		<param name="enable_navdata_adc_data_frame" value="False" />
+		<param name="enable_navdata_video_stream" value="False" />
+		<param name="enable_navdata_games" value="False" />     
+		<param name="enable_navdata_pressure_raw" value="False" />     
+		<param name="enable_navdata_magneto" value="True" />
+		<param name="enable_navdata_wind_speed" value="False" />
+		<param name="enable_navdata_kalman_pressure" value="False" />  
+		<param name="enable_navdata_hdvideo_stream" value="False" />
+		<param name="enable_navdata_wifi" value="True" />
+		<param name="enable_navdata_zimmu_3000" value="True" />
+
         </node>
 </launch>
+
 

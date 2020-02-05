@@ -40,7 +40,7 @@ class Connectivity:
         print("\nDictionary: ", ping_values)
 
 
-gh = Connectivity("192.168.1.135",10)
+gh = Connectivity("192.168.1.1",10)
 # gh = Connectivity("localhost")
 # gh = Connectivity("sdgdgdhdf")
 
