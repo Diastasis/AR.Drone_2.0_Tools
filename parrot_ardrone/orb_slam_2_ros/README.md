@@ -192,5 +192,5 @@ sudo apt install ros-melodic-rgbd-launch
 
 
 https://github.com/appliedAI-Initiative/orb_slam_2_ros
-
+Similar project: https://github.com/rayvburn/ORB-SLAM2_ROS
 
