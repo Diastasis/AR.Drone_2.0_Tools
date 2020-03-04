@@ -85,12 +85,12 @@ public:
     , it_(nh_)
     , useCamInfo_(true)
   {
-    image_sub_ = it_.subscribe("/image", 1, &ArucoMarkerPublisher::image_callback, this);
+    image_sub_ = it_.subscribe("/image", 1, &ArucoMarkerPublisher::image_callback, this); ///image
 
     nh_.param<bool>("use_camera_info", useCamInfo_, true);
     if(useCamInfo_)
     {
-      sensor_msgs::CameraInfoConstPtr msg = ros::topic::waitForMessage<sensor_msgs::CameraInfo>("/camera_info", nh_);//, 10.0);
+      sensor_msgs::CameraInfoConstPtr msg = ros::topic::waitForMessage<sensor_msgs::CameraInfo>("/camera_info", nh_);//, 10.0); ///camera_info
       camParam_ = aruco_ros::rosCameraInfo2ArucoCamParams(*msg, useRectifiedImages_);
       nh_.param<double>("marker_size", marker_size_, 0.05);
       nh_.param<bool>("image_is_rectified", useRectifiedImages_, true);

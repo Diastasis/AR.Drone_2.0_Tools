@@ -1,0 +1,14 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/ros/parrot2_ws/src/parrot_ardrone/aruco-markers/create_markers/src/create_marker.cpp
+opencv2/highgui.hpp
+-
+opencv2/aruco.hpp
+-
+

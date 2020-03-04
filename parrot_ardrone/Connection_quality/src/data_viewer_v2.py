@@ -25,7 +25,7 @@ titles = ['Packets Transmitted (#)','Packets Received (#)',
         'Link Quality (#/70)', 'Link Quality (%)','Signal Level (dBm)','Signal Level (mW)',
         'Noise Level (dBm)', 'Noise Level (mW)']
 
-npy_file_path = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/NPY/Ping_(1.0m)_240220_130152.npy'
+npy_file_path = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/NPY/Ping_250220_014100_(0.5m).npy'
 
 def dict2fig(dictionary, title_list):
     # Initialiaze all fields to np arrays filled with zeros
@@ -41,14 +41,15 @@ def npy2fig(npy_file_path, title_list=titles,exclude=[]):
     variables,x,y = fig_data.shape
 #    print(fig_data.shape)
 #    print(len(fig_data))
-    print(" x:", x, " y:", y, " variables:", variables)
+#    print(" x:", x, " y:", y, " variables:", variables)
+    print(fig_data[17])
     
-    img_graphs(fig_data)
+#    img_graphs(fig_data)
     
     axis_X = np.zeros((x))
     axis_Y = np.zeros((y))
-    print(list(axis_X))
-    print(axis_Y)
+#    print(list(axis_X))
+#    print(axis_Y)
 
 def csv2fig(csv_file, title_list):
     pass

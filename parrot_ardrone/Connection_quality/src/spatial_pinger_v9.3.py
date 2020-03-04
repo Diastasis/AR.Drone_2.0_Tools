@@ -11,6 +11,9 @@ from datetime import datetime
 import csv
 import iwlist # https://github.com/iancoleman/python-iwlist
 import re
+from textwrap import dedent
+import time
+import telnetlib
 #import data_viewer_v2
 #import copy # deep copy
 
@@ -30,23 +33,46 @@ savenpy_mode = True  # Save data to a npy binary file
 # =============================================
 # Function Definition
 # =============================================
-def wifi_statistics(stats_count=3):
+def pc_wifi_stats(stats_count=3):
     """Parse wifi values from terminal"""
-    link_sum,level_sum, noise_sum = 0, 0, 0
-    for i in range(stats_count):
-        args = ["grep", "-i", "wlp2s0","/proc/net/wireless"]
+#    link_sum,level_sum, noise_sum = 0,0,0
+    link_sum2,level_sum2, noise_sum2 = [], [], [] #0,0,0
+    args = ["grep", "-i", "wlp2s0","/proc/net/wireless"]
+    for _ in range(stats_count):
         try:
             link, level, noise = str(subprocess.Popen( args, stdout=subprocess.PIPE,stderr=subprocess.PIPE ).communicate())[16:35].replace(".","").strip().split()
         except:
-            link, level, noise = -999, -999, -999
             print("Unable to retrieve wifi data. Are you connected?") 
-        link_sum += int(link)
-        level_sum += int(level)
-        noise_sum += int(noise)
-#   Take several measurements and calculate the average value for every point. 
-    link = link_sum / stats_count
-    level = level_sum / stats_count
-    noise = noise_sum / stats_count
+            return {"measurement_count": stats_count, "link_quality": -999,"link_quatity_amount": -999,
+            "signal_dbm": -999, "signal_mw": -999, "noise_dbm": -999, "noise_mw": -999}
+        
+#        # Sum up the returned values:    
+#        link_sum += int(link)
+#        level_sum += int(level)
+#        noise_sum += int(noise)
+
+        # Sum up the returned values:    
+        link_sum2.append(int(link))
+        level_sum2.append(int(level))
+        noise_sum2.append(int(noise))
+        
+##   Calculate the average value for every point. 
+#    link = link_sum / stats_count
+#    print("link1: ", link)
+#    level = level_sum / stats_count
+#    noise = noise_sum / stats_count
+
+#   Calculate the average value for every point. 
+    link2 = sum(link_sum2)/len(link_sum2)
+    print("link2: ", link2)
+    
+    level2 = sum(level_sum2)/len(level_sum2)
+    print("level2: ", level2) #level_sum / stats_count
+    
+    noise2 = sum(noise_sum2)/len(noise_sum2)
+    print("noise2: ", noise2) #noise_sum / stats_count
+    
+    
     return {
             "measurement_count": stats_count,
             "link_quality": link,
@@ -56,21 +82,68 @@ def wifi_statistics(stats_count=3):
             "noise_dbm": noise,
             "noise_mw": round((10**((noise)/10.))*1000000,2)
             }
-def get_bitrate():
-    """Parse bitrate by iwlist wlp2s0 bitrate command"""
+def pc_get_bitrate(interface="wlp2s0" ):
+    """Parse bitrate by iwlist wlp2s0 bitrate command from the PC"""
     pattern = re.compile(r'Current Bit Rate[:=](\d+\.?\d+)') # Regular expression to parse the terminal output
     
-    args = ["iwlist","wlp2s0","bitrate"]
+    args = ["iwlist",interface,"bitrate"]
     my_string = str(subprocess.Popen( args, stdout=subprocess.PIPE,stderr=subprocess.PIPE ).communicate())   
     matches = pattern.finditer(my_string)
+    bit_rate = 0
     for match in matches:
         bit_rate = match.group(1)
     return float(bit_rate)
+
+def drone_get_bitrate(HOST="192.168.1.1", interface="ath0" ):
+#    TODO: Fix the redudant patterns
+    """Parse bitrate by iwlist wlp2s0 bitrate command from the DRONE"""
+    pattern = re.compile(br'Current Bit Rate[:=](\d+\.?\d+)') # Regular expression to parse the terminal output
+    pattern2 = re.compile(r'Current Bit Rate[:=](\d+\.?\d+)') # Regular expression to parse the terminal output
+    
+    # iwlist ath0 bitrate
+    tn = telnetlib.Telnet(HOST)
+    time.sleep(3)
+    tn.write(b"iwlist ath0 bitrate\n")
+    bit_rate = tn.expect([pattern], 15)# Time out in 15 Secs
+    tn.close() # close the connection
+    
+    if bit_rate[0] == -1:
+        print("DRONE: Bitrate value does not have the right format.")
+        return -999
+    matches = pattern2.findall(bit_rate[2].decode('ascii'))
+    bit_rate = 0
+    for match in matches:
+        bit_rate = match#.group(1)
+    return round(float(bit_rate),2) # returns just the 
         
+def drone2pc_ping(HOST="192.168.1.1"):
+    pattern = re.compile(br'=\s?(\d+.?\d+)/(\d+.?\d+)/(\d+.?\d+)\s?\bms\b') #Set a regex to parse the data
+    tn = telnetlib.Telnet(HOST)
+    time.sleep(3)
+    tn.write(b"ping 192.168.1.2 -c 3\n")
+    OUTPUT = tn.expect([pattern], 15)# Time out in 15 Secs
+    tn.close() # close the connection
+    if OUTPUT[0] == -1:
+        print("DRONE: Ping does not return the right values.")
+        return {"destination": "192.168.1.3",
+                "packet_transmit": -999,
+                "packet_receive": -999,
+                "packet_loss_count": -999,
+                "packet_loss_rate": -999,
+                "rtt_min": -999,
+                "rtt_avg": -999,
+                "rtt_max": -999,
+                "rtt_mdev": -999,
+                "packet_duplicate_count": -999,
+                "packet_duplicate_rate": -999
+            }
+    parser = pingparsing.PingParsing()
+    OUTPUT = parser.parse(dedent(OUTPUT[2].decode('ascii')))
+#    return json.dumps(OUTPUT.as_dict(), indent=4) # return data in JSON format 
+    return OUTPUT.as_dict() # return a dictionary
     
     
-    
-#  ==========[ Main() ]==========
+#  ==========[ Main ]==========
 def main():  
     # define the rooms diamensions (x,y,z -> width,length, height)
     # TODO: Add user promption in case of zero value in w_point/h_point/l_point 
@@ -127,7 +200,7 @@ def main():
     # Creat ping objects
     ping_parser = pingparsing.PingParsing()
     transmitter = pingparsing.PingTransmitter()
-    transmitter.destination = "178.239.173.175" #'192.168.1.1' 
+    transmitter.destination ="178.239.173.175" # "178.239.173.175" #'192.168.1.1' 
     transmitter.count = 3
     
     # Load sound file
@@ -141,7 +214,8 @@ def main():
     
     content = iwlist.scan(interface='wlp2s0') # Wifi module
     
-    output_list = []
+    pc_output_list = []
+    drone_output_list = []
     output_dict = {}
     
     for h in range(h_points):
@@ -155,9 +229,10 @@ def main():
                         input("")
                     except SyntaxError:
                         pass
-                result = {'z':round((h*h_step)+h_step,2),'x':round((w*w_step)+w_step,2),'y':round((l*l_step)+l_step,2)} # Add coordinate points               
+                result = {'z':round((h*h_step)+h_step,2),'x':round((w*w_step)+w_step,2),'y':round((l*l_step)+l_step,2)} # Add coordinate points    
                 result.update(ping_parser.parse(transmitter.ping()).as_dict())    # Retreive the ping stats and put them in a dictionary
-                result.update(wifi_statistics())                                  # Retreive wifi statistics
+                result.update(pc_wifi_stats())                                  # Retreive wifi statistics
+                result['bitrate'] = pc_get_bitrate()                                 # Retrieve bitrate
                 
     #            Save ping data in the coresponding variables
                 packet_transmit[w,l] =      round(result['packet_transmit'],2)
@@ -179,13 +254,17 @@ def main():
                 signal_mw[w,l] =            round(result['signal_mw'],2)
                 noise_dbm[w,l] =            round(result['noise_dbm'],2)
                 noise_mw[w,l] =             round(result['noise_mw'],2)
+                bitrate[w,l] =              round(result['bitrate'],2)
                 
-                result['bitrate'] = get_bitrate()
-#                result['networks'] = iwlist.parse(content)
-                print(json.dumps(result, indent=4))
+                result['networks'] = iwlist.parse(content)
+#                print(json.dumps(result, indent=4))
                 
-                output_list.append(result)
-                output_dict['PC'] = output_list
+                pc_output_list.append(result)
+                output_dict['pc2drone'] = pc_output_list
+                
+                
+                output_dict['drone2pc'] = drone_output_list
+                
                 
         #  ==========[ Export NPY file  ]==========
         if savenpy_mode:
@@ -196,12 +275,12 @@ def main():
 #  ==========[ Export dictionary to a CSV file ]==========
     if savecsv_mode:
         headers = []
-        for item in output_dict['PC'][0].keys():
+        for item in output_dict['pc2drone'][0].keys():
             headers.append(item)
         with open(csv_file_path, mode='w') as csv_file:
             writer = csv.DictWriter(csv_file, headers)
             writer.writeheader()
-            for item in output_dict['PC']:
+            for item in output_dict['pc2drone']:
                 writer.writerow(item)       
         print('\nCSV File saved!')
 
@@ -222,7 +301,6 @@ def main():
         print(json.dumps(output_dict, indent=4))
         for i,var in enumerate(point_data):
             for obj in var:
-                    
                 print("\n",titles[i],":\n",(len(titles[i])+2)*"-","\n", var)
         
 if __name__ == '__main__':

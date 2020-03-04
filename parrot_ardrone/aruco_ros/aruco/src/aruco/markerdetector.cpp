@@ -132,7 +132,7 @@ namespace aruco
 
 
     cv::Mat imgToBeThresHolded=grey;
-    double ThresParam1=_thresParam1,ThresParam2=_thresParam2;
+    double ThresParam1=_thresParam1, ThresParam2 =_thresParam2;
     //Must the image be downsampled before continue processing?
     if ( pyrdown_level!=0 )
     {

@@ -7,6 +7,15 @@
                 <param name="looprate" value="50" />
 		<param name="realtime_video" value="True" />
 
+		<param name="ardrone_name" value="New_Name :)" />
+		<param name="outdoor" value="False" />
+		<param name="flight_without_shell" value="False" />
+		<param name="codec_fps" value="30" />
+		<!--<param name="video_codec" value="130" />-->
+		
+<!--<param name="bitrate_ctrl_mode" value="VBC_MODE_DYNAMIC" />--><!--VBC_MODE_DISABLED = 0, VBC_MODE_DYNAMIC = 1, VBC_MANUAL = 2-->
+		
+
 <!--ccess almost all sensor readings, debug values and status reports sent from the AR-Drone by usingSelectiveNavdata.-->
 		<param name="enable_navdata_time" value="False" />
 		<param name="enable_navdata_trims" value="False" />
@@ -19,17 +28,17 @@
 		<param name="enable_navdata_vision_perf" value="False" />
 		<param name="enable_navdata_trackers_send" value="False" />
 		<param name="enable_navdata_vision_detect" value="False" />    
-		<param name="enable_navdata_watchdog" value="True" />    
+		<param name="enable_navdata_watchdog" value="False" />    
 		<param name="enable_navdata_adc_data_frame" value="False" />
 		<param name="enable_navdata_video_stream" value="False" />
 		<param name="enable_navdata_games" value="False" />     
 		<param name="enable_navdata_pressure_raw" value="False" />     
-		<param name="enable_navdata_magneto" value="True" />
+		<param name="enable_navdata_magneto" value="False" />
 		<param name="enable_navdata_wind_speed" value="False" />
 		<param name="enable_navdata_kalman_pressure" value="False" />  
 		<param name="enable_navdata_hdvideo_stream" value="False" />
-		<param name="enable_navdata_wifi" value="True" />
-		<param name="enable_navdata_zimmu_3000" value="True" />
+		<param name="enable_navdata_wifi" value="False" />
+		<param name="enable_navdata_zimmu_3000" value="False" />
 
         </node>
 </launch>

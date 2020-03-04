@@ -15,3 +15,5 @@ usb_cam is released with a BSD license. For full terms and conditions, see the [
 See the [AUTHORS](AUTHORS.md) file for a full list of contributors.
 
 https://github.com/ros-drivers/usb_cam
+
+REQUIRED: sudo apt-get install v4l-utils

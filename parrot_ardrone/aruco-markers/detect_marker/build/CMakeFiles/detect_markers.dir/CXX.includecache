@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/ros/parrot2_ws/src/parrot_ardrone/aruco-markers/detect_marker/src/main.cpp
+opencv2/opencv.hpp
+-
+opencv2/aruco.hpp
+-
+iostream
+-
+cstdlib
+-
+

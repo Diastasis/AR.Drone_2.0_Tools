@@ -68,7 +68,7 @@ namespace aruco {
  */
   cv::Mat FiducidalMarkers::getMarkerMat(int id) throw (cv::Exception)
   {
-    Mat marker(5,5, CV_8UC1);
+    Mat marker(5,5, CV_8UC1); //Edit: 5,5
     marker.setTo(Scalar(0));
     if (0<=id && id<1024) {
       //for each line, create

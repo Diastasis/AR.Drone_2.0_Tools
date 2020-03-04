@@ -14,5 +14,6 @@ roslaunch bebop_control localization.launch
 ```
 From ROS topic `bebop_pose` you must be able to read pose of the copter with respect to your ArUco markers.
 
-
 https://github.com/vasilya93/bebop_control
+
+# This is another project - To be cleaned

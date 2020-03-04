@@ -1,0 +1,4 @@
+/home/ros/parrot2_ws/src/parrot_ardrone/aruco-markers/create_markers/build/CMakeFiles/rebuild_cache.dir
+/home/ros/parrot2_ws/src/parrot_ardrone/aruco-markers/create_markers/build/CMakeFiles/edit_cache.dir
+/home/ros/parrot2_ws/src/parrot_ardrone/aruco-markers/create_markers/build/CMakeFiles/generate_marker.dir
+/home/ros/parrot2_ws/src/parrot_ardrone/aruco-markers/create_markers/build/CMakeFiles/generate_board.dir

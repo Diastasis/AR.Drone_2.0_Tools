@@ -32,7 +32,7 @@ savenpy_mode = True  # Save data to a npy binary file
 # =============================================
 # Function Definition
 # =============================================
-def pc2drone_pinger(target_ip="178.239.173.175", _count=5): # "178.239.173.175" #'192.168.1.1' 
+def pc2drone_pinger(target_ip="127.0.0.1", _count=5): # "178.239.173.175" #'192.168.1.1' 
     """Parse ping values from PC's terminal"""
     print("(PC): \t PINGING DRONE \t\t [{}]".format(target_ip))
     ping_parser = pingparsing.PingParsing()
@@ -346,13 +346,16 @@ def main():
         
 #        Save 'networks' to CSV
         headers = []       
-        for item in output_dict['networks'][0].keys():
-            headers.append(item)
-        with open(csvPath_networks, mode='w') as csv_file:
-            writer = csv.DictWriter(csv_file, headers)
-            writer.writeheader()
-            for item in output_dict['networks']:
-                writer.writerow(item)
+        if len(output_dict['networks']) == 0:
+            print("No Wifi scanning data. Are you on flight mode?")
+        else:
+            for item in output_dict['networks'][0].keys():
+                headers.append(item)
+            with open(csvPath_networks, mode='w') as csv_file:
+                writer = csv.DictWriter(csv_file, headers)
+                writer.writeheader()
+                for item in output_dict['networks']:
+                    writer.writerow(item)
         print("(CSV): networks saved!")
 
 #  ==========[ Export dictionary to a JSON file ]==========
