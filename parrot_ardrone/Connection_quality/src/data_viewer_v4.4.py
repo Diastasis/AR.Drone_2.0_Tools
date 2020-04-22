@@ -1,9 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
+#from mpl_toolkits.mplot3d import Axes3D
+#from matplotlib import cm
 import matplotlib.image as mpimg
-from math import sqrt
+#from math import sqrt
+from sklearn import linear_model
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import mean_squared_error
 import sys
 #np.set_printoptions(threshold=np.inf)
 np.set_printoptions(threshold=sys.maxsize)
@@ -647,12 +651,46 @@ def  main():
 ##  15   | Bitrate (Mb/s)
 ## ------------------------------------------------
     
-    dists = ardrone.distances.reshape(4,121)
-    arBitrate = ardrone.dataList[11].reshape(4,121)
-    anBitrate = anafi.dataList[11].reshape(4,121)
+    dists = ardrone.distances.reshape(1,-1)
+    arRSSI = ardrone.dataList[12].reshape(1,-1)
+    anRSSI = anafi.dataList[12].reshape(1,-1)
     
-    plt.scatter(dists,arBitrate,s=10)
-    plt.scatter(dists,anBitrate,s=10)
+#    arReg = linear_model.LinearRegression()
+#    anReg = linear_model.LinearRegression()
+#    
+#    arReg.fit(dists[0].reshape(-1,1), arRSSI[0])
+#    anReg.fit(dists[0].reshape(-1,1), anRSSI[0])
+    
+#    print(dists[0])
+#    print(dists[0].reshape(-1,1))
+    
+#    arPredict = arReg.predict(dists[0].reshape(-1,1))
+#    arPoly = PolynomialFeatures(degree=2)
+#    temp = arPoly.fit_transform(dists[0].reshape(-1,1))
+#    anPredict = anReg.predict(dists[0].reshape(-1,1)) 
+#    anPoly = PolynomialFeatures(degree=2)
+
+    # The coefficients
+#    print('Ardrone Coefficients: \t', arReg.coef_)
+#    print('Ardrone Intercept: \t', arReg.intercept_)
+#    print('Anafi Coefficients: \t', anReg.coef_)
+#    print('Anafi Intercept: \t', anReg.intercept_)
+
+        
+#    plt.scatter(dists[0],arRSSI[0],s=10)
+#    plt.plot(dists[0],arPredict)
+#    plt.scatter(dists,anRSSI,s=10)
+#    plt.plot(dists[0],anPredict)
+
+    xp = np.linspace(dists[0].min(),dists[0].max(),100)
+    
+    arPoly = np.polyfit(dists[0],arRSSI[0],3)
+    arp = np.poly1d(arPoly)
+    plt.plot(dists[0],arRSSI[0],'.',xp,arp(xp),'-')
+
+    anPoly = np.polyfit(dists[0],anRSSI[0],3)
+    anp = np.poly1d(anPoly)
+    plt.plot(dists[0],anRSSI[0],'.', xp,anp(xp),'-')
     
     plt.show()
 
