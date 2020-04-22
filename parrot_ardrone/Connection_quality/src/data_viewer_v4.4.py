@@ -675,8 +675,7 @@ def  main():
 #    print('Ardrone Intercept: \t', arReg.intercept_)
 #    print('Anafi Coefficients: \t', anReg.coef_)
 #    print('Anafi Intercept: \t', anReg.intercept_)
-
-        
+   
 #    plt.scatter(dists[0],arRSSI[0],s=10)
 #    plt.plot(dists[0],arPredict)
 #    plt.scatter(dists,anRSSI,s=10)
