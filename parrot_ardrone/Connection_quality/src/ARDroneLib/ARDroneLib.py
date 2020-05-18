@@ -10,7 +10,7 @@ version = 4
 ##############
 ### IMPORT ###
 ##############
-import os, time, threading, socket, struct, random
+import time, threading, socket, struct, random #,os
 import ARDroneLib.ARDroneNavdata as ARDroneNavdata
 import ARDroneLib.ARDroneConfig as ARDroneConfig
 
@@ -31,19 +31,21 @@ def nothing(arg1=None,arg2=None):
 ###############
 ### CLASSES ###
 ###############
-
+#XXX:
 class Drone():
-    "Classe qui gere un drone"
+    "Class that manages a drone"
     def __init__(self, ip = "192.168.1.1",data_callback=nothing):
         self.ip = ip
+        self.navThread = None
+        
         # Check drone availability
         if not _check_telnet(self.ip):
             raise IOError("Cannot connect to AR.Drone 2")
+        
         # Initialise the communication thread
         self.comThread = _CommandThread(ip)
         self.comThread.start()
         self.c = self.comThread.command # Alias
-        self.navThread = None
         
         
     def stop(self):
@@ -186,8 +188,8 @@ class Drone():
         "Make the drone turn right, speed is between 0 and 1"
         return self.navigate(angle_change=speed)
 
+#XXX:
     ## Special
-
 class _CommandThread(threading.Thread):
     "Class that manages Parrot orders because we have to send them often"
     def __init__(self, ip = "192.168.1.1", port = COMMAND_PORT):
@@ -201,6 +203,7 @@ class _CommandThread(threading.Thread):
         self.socket_lock = threading.Lock() # Create the lock for the socket
         self.navdata_enabled = False # If navdata is enabled or not (will check ACK)
         self.__ack = False
+        
         # Create the UDP Socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.connect((self.ip, self.port))
@@ -238,16 +241,16 @@ class _CommandThread(threading.Thread):
                 tries=0     # Only one try when no navdata (and wait)
             while tries >= 0:
                 to_send = "AT*CONFIG_IDS="+str(self.counter) + ',"' + self.session_id + '","' + self.profile_id + '","' + self.app_id + '"\r'
-                self.sock.send(to_send)
+                self.sock.send(to_send.encode())
                 if not self.navdata_enabled:    
                     time.sleep(0.15)
                 to_send = "AT*CONFIG="+str(self.counter+1)+',"' + str(argument) + '","' + str(value) + '"\r'
                 if DEBUG:
                     print (to_send) # Printing the AT*CONFIG we are sending
-                self.sock.send(to_send)
+                self.sock.send(to_send.encode())
                 self.counter = self.counter + 2
                 if self.navdata_enabled:    # Wait until we receive ACK if navadata enable
-                    ack = False # not acknoledged first
+#                    ack = False #  not acknoledged first
                     for i in range(100):
                         if self.__ack:
                             #print "OK"
@@ -259,7 +262,8 @@ class _CommandThread(threading.Thread):
                 else:   
                     time.sleep(0.05)    # But if we don't have navdata, just wait a fixed period
                 tries -= 1
-            self.sock.send("AT*CTRL="+str(self.counter)+",5,0")
+                msg = "AT*CTRL="+str(self.counter)+",5,0"
+            self.sock.send(msg.encode())
             self.counter = self.counter + 1
 #            self.socket_lock.release() # <1>
         if tries >= 0 or not self.navdata_enabled:  
@@ -284,13 +288,14 @@ class _CommandThread(threading.Thread):
         "Send commands every 30ms"
         while self.running:
             com = self.com
-            conf = self.continous_config
+#            conf = self.continous_config
 #            self.socket_lock.acquire() # Ask for the permission to send msg  <2>
             with self.socket_lock:  # <2>
-                self.sock.send('AT*COMWDG\r')
+                msg = 'AT*COMWDG\r'
+                self.sock.send(msg.encode())
                 if com != None:
                     com = com.replace("#ID#",str(self.counter))
-                    self.sock.send(com)
+                    self.sock.send(com.encode())
                     self.counter += 1
 #                self.socket_lock.release() <2>
             time.sleep(0.03)
@@ -311,6 +316,7 @@ class _CommandThread(threading.Thread):
         time.sleep(0.05)
         return True
 
+#XXX:
 class _NavdataThread(threading.Thread):
     "Manage the incoming data"
     def __init__(self, communication, callback):
@@ -340,7 +346,8 @@ class _NavdataThread(threading.Thread):
         "Start the data handler"
         self.com._activate_navdata(activate=True) # Tell com thread that we are here
         # Initialize the drone to send the data
-        self.sock.sendto("\x01\x00\x00\x00", (self.ip,self.port))
+        msg = "\x01\x00\x00\x00", (self.ip,self.port)
+        self.sock.sendto(msg.encode())
         time.sleep(0.05)
         while self.running:
             try:
@@ -358,7 +365,8 @@ class _NavdataThread(threading.Thread):
         
     def reconnect(self):
         "Try to send another packet to reactivate navdata"
-        self.sock.sendto("\x01\x00\x00\x00", (self.ip,self.port))
+        msg = "\x01\x00\x00\x00", (self.ip,self.port)
+        self.sock.sendto(msg.encode())
         return True
         
     def stop(self):
@@ -370,6 +378,7 @@ class _NavdataThread(threading.Thread):
 ### DEFINITIONS ###
 ###################
 
+#XXX:
 def _check_telnet(IP):
     "Check if we can connect to telnet"
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
