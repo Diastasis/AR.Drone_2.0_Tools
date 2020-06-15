@@ -27,6 +27,9 @@ np.set_printoptions(threshold=sys.maxsize)
 
 #XXX:
 class Drone():
+#   TODO: 
+#    Implement drone propeller mode
+#    Fix the drone type mechanism (Auto for AR.Drone and Manual for Anafi)
     '''This class creates drone objects'''
     def __init__(self,drone_name,drone_ip,drone_type=None,pc_interface='wlp2s0'):
         self.name = drone_name
@@ -35,17 +38,22 @@ class Drone():
         self.drone_type = drone_type
         
         if self.drone_type == 'Ardrone':
-#            self.drone = ARDroneLib.Drone()
-            pass
+            self.drone = ARDroneLib.Drone()
         elif self.drone_type == 'Anafi':
-            pass
+            self.drone = None
+            print('This drone supports only manual propeller activation!')
+        elif self.drone_type = 'Other':
+            self.drone = None
+            print('This drone supports only manual propeller activation!')
         else:
-            print('The drone type is not specified!')
+            raise ValueError('The drone type is not specified!')
         
         print(self.name,"is created!")
 
 # XXX:
 class Environment():
+# TODO:
+#        Fix the x_points,y_points,z_points (starting point and padding related issue)
     '''Class for holding all room's properties in one object'''
     def __init__(self,name='None',x=0,x_num=0,x_padding=0,y=0,y_num=0,y_padding=0,z=0,z_num=0,z_padding=0):
         self.name = name
@@ -76,25 +84,12 @@ class RangeFinger():
 #XXX:
 class SpatialPinger():
     #TODO:
-#    1) Fix the debug messages
-#    2) Fix the welcome message - Show adsolute and relative distance in addition to points
-#    3) Add on the Json file the relative, the absolute and the points
-#    4) Add on the CSV file the relative, the absolute and the points
+#    Save WIFI networks transmitting aroound to CSV and JSON files
 
     '''Class for taking different type of ping measurements'''
     def __init__(self,drone, environment, dbg_mode=True,manual_mode=True,savecsv_mode=True,figure_mode=False,sound_mode=True,savejson_mode=True,savenpy_mode=True,welcome_mode=True,propeller_mode=False):
-        self.drone = drone
-#        self.note = note
-##        define the rooms diamensions in meters (x,y,z OR w,l,h -> width,length, height)
-#        self.x = x
-#        self.y = y
-#        self.z = z
-#        self.xz_padding = xy_padding
-#        
-#        self.x_points = np.linspace(0.0,x-xy_padding*2,x_num)
-#        self.y_points = np.linspace(0.0,y-xy_padding*2,y_num)
-#        self.z_points = np.linspace(0.5,z,z_num)
-        
+
+        self.drone = drone      
         self.environment = environment
         self.point_data = np.zeros((16,len(self.environment.z_points),len(self.environment.x_points),len(self.environment.y_points)))
    
@@ -233,12 +228,6 @@ class SpatialPinger():
         print("Please relax, this process is going to take \nquite some time.  Lets start! :D")
         print("***************************************************\n***************************************************\n")
 
-
-
-
-
-
-
     def start(self):
         self.welcome()
         pc_output_list = []
@@ -255,12 +244,13 @@ class SpatialPinger():
                         while invalid_input:
                             invalid_input = False
                             # The next 4 lines are creating the angle graphic using text chars
-#                            print("\n\t\t+---+---+---+---+\n\t\t|   |   |   |   |\n\t\t+---+---+---+---+\n\t\t|   |   |   |   |\n\t\t+---+---+---+---+\n\t\t|   |   |   |   |\n\t\t+---+---+---+---+\n\t\t|   |   |   |   |\n\t\t+---+---+---+---+")
-                            print("\n\t      +-------------------+\n\t      | +---+---+---+---+ |\n\t      | |   |   |   |   | |\n\t      | +---+---+---+---+ |\n\t      | |   |   |   |   | |\n\t      | +---+---+---+---+ |\n\t      | |   |   |   |   | |\n\t      | +---+---+---+---+ |\n\t      | |   |   |   |   | |\n\t      | +---+---+---+---+ |\n\t      +-------------------+")
-                            print("\n     --> [ Next point:",(self.environment.x_points[x_index],self.environment.y_points[y_index],self.environment.z_points[z_index]),"] <-- ")
-                            print("\n\t\t\tOR")
-                            print("\n\t--> [ Next point:",(x_index,y_index,z_index),"] <-- \n")
-    
+                            print("\t      +-------------------+\n\t      | +---+---+---+---+ |\n\t      | |   |   |   |   | |\n\t      | +---+---+---+---+ |\n\t      | |   |   |   |   | |\n\t      | +---+---+---+---+ |\n\t      | |   |   |   |   | |\n\t      | +---+---+---+---+ |\n\t      | |   |   |   |   | |\n\t      | +---+---+---+---+ |\n\t      +-------------------+")
+                            print("\n\t--> [ Next point:",(x_index,y_index,z_index),"] <--")
+                            print("\n\t  -----------------------------")                            
+                            print("\n     Absolute distance:\t\t  ",(self.environment.x_points[x_index]+self.environment.x_padding,self.environment.y_points[y_index]+self.environment.y_padding,self.environment.z_points[z_index]+self.environment.z_padding))
+                            print("\n     Relative to padding distance:",(self.environment.x_points[x_index],self.environment.y_points[y_index],self.environment.z_points[z_index]),'\n')
+
+                            
                             if self.manual_mode:
                                 if x_index == 0 and y_index == 0 and z_index == 0:
                                     user = input("Press [s] to start followed by [Enter] to start.")
@@ -287,7 +277,7 @@ class SpatialPinger():
 #                            sleep(2)
                             
         #                Combine Results
-                        pc_result = {'x':x_index,'y':y_index, 'z':z_index, 'x_m':self.environment.x_points[x_index]+self.environment.x_padding,'y_m':self.environment.y_points[y_index]+self.environment.y_padding ,'z_m':self.environment.z_points[z_index]+self.environment.z_padding , 'propellers':self.propellers}    # add the angle
+                        pc_result = {'x':x_index,'y':y_index, 'z':z_index, 'x_abs':self.environment.x_points[x_index]+self.environment.x_padding,'y_abs':self.environment.y_points[y_index]+self.environment.y_padding ,'z_abs':self.environment.z_points[z_index]+self.environment.z_padding, 'x_rel':self.environment.x_points[x_index], 'y_rel':self.environment.y_points[y_index], 'z_rel':self.environment.z_points[z_index], 'propellers':self.propellers}    # add the angle
                         pc_result.update(self.ping(count=10))       # "127.0.0.1",'192.168.42.98'
                         pc_result.update(self.signalStrength())     # Retreive wifi statistics
                         pc_result.update(self.bitrate())            # Retrieve bitrate
@@ -527,6 +517,7 @@ class RadiationTracker():
 #  ############################
 #  ########### MAIN ###########
 #  ############################
+# XXX:
 def main():  
     
     virtual_drone = Drone('Router','192.168.1.1',drone_type='Ardrone')
