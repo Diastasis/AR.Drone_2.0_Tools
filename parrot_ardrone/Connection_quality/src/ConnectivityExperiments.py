@@ -27,7 +27,6 @@ np.set_printoptions(threshold=sys.maxsize)
 
 #XXX:
 class Drone():
-#   TODO: 
     '''This class creates drone objects'''
     def __init__(self,drone_name,drone_ip,drone_type=None,pc_interface='wlp2s0'):
         self.name = drone_name
@@ -40,18 +39,16 @@ class Drone():
         elif self.drone_type == 'Anafi':
             self.drone = None
             print('This drone supports only manual propeller activation!')
-        elif self.drone_type = 'Other':
+        elif self.drone_type == 'Other':
             self.drone = None
             print('This drone supports only manual propeller activation!')
         else:
-            raise ValueError('The drone type is not specified!')
+            raise ValueError('The drone type is not defined properly! Choose between: Ardrone, Anafi and Other.')
         
         print(self.name,"is created!")
 
 # XXX:
 class Environment():
-# TODO:
-#        Fix the x_points,y_points,z_points (starting point and padding related issue)
     '''Class for holding all room's properties in one object'''
     def __init__(self,name='None',x=0,x_num=0,x_padding=0,y=0,y_num=0,y_padding=0,z=0,z_num=0,z_padding=0):
         self.name = name
@@ -65,9 +62,9 @@ class Environment():
         self.z_num = z_num
         self.z_padding = z_padding
         
-        self.x_points = np.linspace(0.0,x-x_padding*2,x_num)
-        self.y_points = np.linspace(0.0,y-y_padding*2,y_num)
-        self.z_points = np.linspace(0.0,z-z_padding*2,z_num)
+        self.x_points = np.linspace(0.0,x-(x_padding*2),x_num)
+        self.y_points = np.linspace(0.0,y-(y_padding*2),y_num)
+        self.z_points = np.linspace(0.0,z-(z_padding*2),z_num)
         
         print("New Environment object is created")
 
@@ -83,8 +80,7 @@ class RangeFinger():
 class SpatialPinger():
     #TODO:
 #    Save WIFI networks transmitting aroound to CSV and JSON files
-#    Implement drone propeller mode
-#    Fix the drone type mechanism (Auto for AR.Drone and Manual for Anafi)
+#    Test the drone propeller mode
 
     '''Class for taking different type of ping measurements'''
     def __init__(self,drone, environment, dbg_mode=True,manual_mode=True,savecsv_mode=True,figure_mode=False,sound_mode=True,savejson_mode=True,savenpy_mode=True,welcome_mode=True,propeller_mode=False):
@@ -183,17 +179,17 @@ class SpatialPinger():
                 bit_rate = match.group(1)
             bitrate_.append(float(bit_rate))
         return {'bitrate' : round(sum(bitrate_)/len(bitrate_),2)}
-#    
-#    def wifiScan(self,index):
-##            WiFi network results
-#            wifi_output_list = []
-#            print("(PC): \t WIFI SCANNING...")
-#            content = iwlist.scan(interface='wlp2s0') # Wifi module
-#            for item in iwlist.parse(content):
-#                item.update({'angle':self.points[index]})# Add angles
-#                wifi_output_list.append(item)
-#            return wifi_output_list
-#
+    
+    def wifiScan(self,index):
+#            WiFi network results
+            wifi_output_list = []
+            print("(PC): \t WIFI SCANNING...")
+            content = iwlist.scan(interface='wlp2s0') # Wifi module
+            for item in iwlist.parse(content):
+                item.update({'angle':self.points[index]})# Add angles
+                wifi_output_list.append(item)
+            return wifi_output_list
+
     def exportCSV(self,output_dict,x,y,z):
         '''Exprot CSV'''
         headers = []
@@ -244,7 +240,7 @@ class SpatialPinger():
                         while invalid_input:
                             invalid_input = False
                             # The next 4 lines are creating the angle graphic using text chars
-                            print("\t      +-------------------+\n\t      | +---+---+---+---+ |\n\t      | |   |   |   |   | |\n\t      | +---+---+---+---+ |\n\t      | |   |   |   |   | |\n\t      | +---+---+---+---+ |\n\t      | |   |   |   |   | |\n\t      | +---+---+---+---+ |\n\t      | |   |   |   |   | |\n\t      | +---+---+---+---+ |\n\t      +-------------------+")
+                            print("\n\t      +-------------------+\n\t      | +---+---+---+---+ |\n\t      | |   |   |   |   | |\n\t      | +---+---+---+---+ |\n\t      | |   |   |   |   | |\n\t      | +---+---+---+---+ |\n\t      | |   |   |   |   | |\n\t      | +---+---+---+---+ |\n\t      | |   |   |   |   | |\n\t      | +---+---+---+---+ |\n\t      +-------------------+")
                             print("\n\t--> [ Next point:",(x_index,y_index,z_index),"] <--")
                             print("\n\t  -----------------------------")                            
                             print("\n     Absolute distance:\t\t  ",(self.environment.x_points[x_index]+self.environment.x_padding,self.environment.y_points[y_index]+self.environment.y_padding,self.environment.z_points[z_index]+self.environment.z_padding))
@@ -520,13 +516,13 @@ class RadiationTracker():
 # XXX:
 def main():  
     
-    virtual_drone = Drone('Router','192.168.1.1',drone_type='Other')
-    virtual_env = Environment(x=12,x_num=5,x_padding=1,y=12,y_num=5,y_padding=1,z=4.5,z_num=4,z_padding=0.5)
+    virtual_drone = Drone('Router','192.168.1.1',drone_type='Hey')
+    virtual_env = Environment(x=12,x_num=5,x_padding=1,y=12,y_num=5,y_padding=1,z=4,z_num=4,z_padding=0.5)
 #    rad1m = RadiationTracker(virtual_drone,degrees=360,axis='Roll',sound_mode=True,manual_mode=True,propeller_mode=True)
 #    rad1m.start()
 #    print(rad1m.point_data)
 #    
-    pinger_1 = SpatialPinger(virtual_drone,virtual_env,sound_mode=False,manual_mode=True)
+    pinger_1 = SpatialPinger(virtual_drone,virtual_env,sound_mode=True,manual_mode=True)
     pinger_1.start()
 #    print(pinger.point_data)    
     
