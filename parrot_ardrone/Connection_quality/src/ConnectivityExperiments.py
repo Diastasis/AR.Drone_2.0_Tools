@@ -28,8 +28,6 @@ np.set_printoptions(threshold=sys.maxsize)
 #XXX:
 class Drone():
 #   TODO: 
-#    Implement drone propeller mode
-#    Fix the drone type mechanism (Auto for AR.Drone and Manual for Anafi)
     '''This class creates drone objects'''
     def __init__(self,drone_name,drone_ip,drone_type=None,pc_interface='wlp2s0'):
         self.name = drone_name
@@ -85,6 +83,8 @@ class RangeFinger():
 class SpatialPinger():
     #TODO:
 #    Save WIFI networks transmitting aroound to CSV and JSON files
+#    Implement drone propeller mode
+#    Fix the drone type mechanism (Auto for AR.Drone and Manual for Anafi)
 
     '''Class for taking different type of ping measurements'''
     def __init__(self,drone, environment, dbg_mode=True,manual_mode=True,savecsv_mode=True,figure_mode=False,sound_mode=True,savejson_mode=True,savenpy_mode=True,welcome_mode=True,propeller_mode=False):
@@ -270,11 +270,11 @@ class SpatialPinger():
                                     print("Acceptable values are 's' to start and 'r' to repeat.")
                                     invalid_input = True
                                     
-#                        if self.propeller_mode:
-#                            self.drone.drone.takeoff()
-#                            sleep(1)
-#                            print('(DRONE): \t TAKING OFF \t [propellers ON]')
-#                            sleep(2)
+                        if self.propeller_mode and self.drone.drone_type == 'Ardrone':
+                            self.drone.drone.takeoff()
+                            sleep(1)
+                            print('(DRONE): \t TAKING OFF \t [propellers ON]')
+                            sleep(2)
                             
         #                Combine Results
                         pc_result = {'x':x_index,'y':y_index, 'z':z_index, 'x_abs':self.environment.x_points[x_index]+self.environment.x_padding,'y_abs':self.environment.y_points[y_index]+self.environment.y_padding ,'z_abs':self.environment.z_points[z_index]+self.environment.z_padding, 'x_rel':self.environment.x_points[x_index], 'y_rel':self.environment.y_points[y_index], 'z_rel':self.environment.z_points[z_index], 'propellers':self.propellers}    # add the angle
@@ -292,11 +292,11 @@ class SpatialPinger():
                         if self.savejson_mode:
                             self.exportJSON(output_dict,x_index,y_index,z_index)
                         
-        #                if self.propeller_mode:
-        #                    self.drone.drone.land()
-        #                    print('(DRONE): \t LANDING \t [propellers OFF]')
-        #                    sleep(1)
-        #                    self.drone.drone.land()
+                        if self.propeller_mode and self.drone.drone_type == 'Ardrone':
+                            self.drone.drone.land()
+                            sleep(1)
+                            self.drone.drone.land()
+                            print('(DRONE): \t LANDING \t [propellers OFF]')
 
 
 class RadiationTracker():
@@ -520,7 +520,7 @@ class RadiationTracker():
 # XXX:
 def main():  
     
-    virtual_drone = Drone('Router','192.168.1.1',drone_type='Ardrone')
+    virtual_drone = Drone('Router','192.168.1.1',drone_type='Other')
     virtual_env = Environment(x=12,x_num=5,x_padding=1,y=12,y_num=5,y_padding=1,z=4.5,z_num=4,z_padding=0.5)
 #    rad1m = RadiationTracker(virtual_drone,degrees=360,axis='Roll',sound_mode=True,manual_mode=True,propeller_mode=True)
 #    rad1m.start()
