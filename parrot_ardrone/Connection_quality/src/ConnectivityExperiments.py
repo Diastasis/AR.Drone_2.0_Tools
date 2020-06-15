@@ -109,8 +109,8 @@ class SpatialPinger():
         self.commonPath = "/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/SpatialPinger"
         self.npyPath = self.commonPath+"/NPY/{}_{}@{}heights_{}.npy".format(self.drone.name,self.time_stamp,len(self.environment.z_points),self.propellers)
         self.jsonPath = self.commonPath+"/JSON/{}_{}@{}heights_{}.json".format(self.drone.name,self.time_stamp,len(self.environment.z_points),self.propellers)
-        self.csvValuePath = self.commonPath+"/CSV/VAL_{}_{}@{}heights_{}.csv".format(self.drone.name,self.time_stamp,len(self.environment.z_points),self.propellers)
-        self.csvNetworkPath = self.commonPath+"/CSV/NET_{}_{}@{}heights_{}.csv".format(self.drone.name,self.time_stamp,len(self.environment.z_points),self.propellers)
+        self.csvValuePath = self.commonPath+"/CSV/{}_{}@{}heights_{}.csv".format(self.drone.name,self.time_stamp,len(self.environment.z_points),self.propellers)
+#        self.csvNetworkPath = self.commonPath+"/CSV/NET_{}_{}@{}heights_{}.csv".format(self.drone.name,self.time_stamp,len(self.environment.z_points),self.propellers)
 
         
 #        Load sound file
@@ -182,13 +182,13 @@ class SpatialPinger():
             bitrate_.append(float(bit_rate))
         return {'bitrate' : round(sum(bitrate_)/len(bitrate_),2)}
     
-    def wifiScan(self,index):
+    def wifiScan(self,x_index,y_index,z_index):
 #            WiFi network results
             wifi_output_list = []
             print("(PC): \t WIFI SCANNING...")
             content = iwlist.scan(interface='wlp2s0') # Wifi module
             for item in iwlist.parse(content):
-                item.update({'angle':self.points[index]})# Add angles
+                item.update({'x':x_index,'y':y_index, 'z':z_index, 'x_abs':self.environment.x_points[x_index]+self.environment.x_padding,'y_abs':self.environment.y_points[y_index]+self.environment.y_padding ,'z_abs':self.environment.z_points[z_index]+self.environment.z_padding, 'x_rel':self.environment.x_points[x_index], 'y_rel':self.environment.y_points[y_index], 'z_rel':self.environment.z_points[z_index], 'propellers':self.propellers})# Add points
                 wifi_output_list.append(item)
             return wifi_output_list
 
@@ -203,15 +203,15 @@ class SpatialPinger():
             writer.writeheader()
             for item in output_dict[self.drone.name]:
                 writer.writerow(item)
-#        Export WiFi networks
-        headers = []
-        for item in output_dict['Networks'][0].keys():
-            headers.append(item)
-        with open(self.csvNetworkPath, mode='w') as csv_file:
-            writer = csv.DictWriter(csv_file, headers)
-            writer.writeheader()
-            for item in output_dict['Networks']:
-                writer.writerow(item)
+##        Export WiFi networks
+#        headers = []
+#        for item in output_dict['Networks'][0].keys():
+#            headers.append(item)
+#        with open(self.csvNetworkPath, mode='w') as csv_file:
+#            writer = csv.DictWriter(csv_file, headers)
+#            writer.writeheader()
+#            for item in output_dict['Networks']:
+#                writer.writerow(item)
         print('(CSV): \tSave values and networks till point ({},{},{}).'.format(x,y,z))
     
     def exportNPY(self,output_dict,x,y,z):
@@ -285,13 +285,13 @@ class SpatialPinger():
                             sleep(2)
                             
         #                Combine Results
-                        pc_result = {'x':x_index,'y':y_index, 'z':z_index, 'x_abs':self.environment.x_points[x_index]+self.environment.x_padding,'y_abs':self.environment.y_points[y_index]+self.environment.y_padding ,'z_abs':self.environment.z_points[z_index]+self.environment.z_padding, 'x_rel':self.environment.x_points[x_index], 'y_rel':self.environment.y_points[y_index], 'z_rel':self.environment.z_points[z_index], 'propellers':self.propellers}    # add the angle
+                        pc_result = {'x':x_index,'y':y_index, 'z':z_index, 'x_abs':self.environment.x_points[x_index]+self.environment.x_padding,'y_abs':self.environment.y_points[y_index]+self.environment.y_padding ,'z_abs':self.environment.z_points[z_index]+self.environment.z_padding, 'x_rel':self.environment.x_points[x_index], 'y_rel':self.environment.y_points[y_index], 'z_rel':self.environment.z_points[z_index], 'propellers':self.propellers}    # add points
                         pc_result.update(self.ping(count=10))       # "127.0.0.1",'192.168.42.98'
                         pc_result.update(self.signalStrength())     # Retreive wifi statistics
                         pc_result.update(self.bitrate())            # Retrieve bitrate
                         pc_output_list.append(pc_result)
                         output_dict[self.drone.name] = pc_output_list
-                        output_dict['Networks'] = pc_output_list
+#                        output_dict['Networks'].update(self.wifiScan(x_index,y_index,z_index))
                         
         #                Save to file
                         if self.savenpy_mode:
@@ -537,7 +537,7 @@ def main():
 #    rad1m.start()
 #    print(rad1m.point_data)
 #    
-    pinger_1 = SpatialPinger(virtual_drone,virtual_env,sound_mode=True,manual_mode=False)
+    pinger_1 = SpatialPinger(virtual_drone,virtual_env,sound_mode=False,manual_mode=True)
     pinger_1.start()
 #    print(pinger.point_data)    
     
