@@ -530,13 +530,14 @@ class RadiationTracker():
 # XXX:
 class RangeFinder():
     '''This class is establishes all the neccessary functionality for the finding the maximum flight range'''
-    def __init__(self,drone,max_distance,step=1,name='None', dbg_mode=True,manual_mode=True,savecsv_mode=True,figure_mode=False,sound_mode=True,savejson_mode=True,savenpy_mode=True,welcome_mode=True,propeller_mode=False):
+    def __init__(self,drone,max_distance,step=1,offset=0,name='None', dbg_mode=True,manual_mode=True,savecsv_mode=True,figure_mode=False,sound_mode=True,savejson_mode=True,savenpy_mode=True,welcome_mode=True,propeller_mode=False):
         self.drone = drone
         self.max_distance = max_distance
         self.step = step
         self.name = name
+        self.offset = offset
         
-        self.points = np.arange(0,max_distance,step).tolist()
+        self.points = np.arange(step,max_distance,step).tolist()
     
         #        Set Modes
         self.dbg_mode = dbg_mode
@@ -669,9 +670,9 @@ class RangeFinder():
     
     def welcome(self):
         #    Welcome message
-        print("\n***************************************************\n\tDrone Radiation Pattern\n***************************************************\n")           
-        print("Please move the drone manually in different \npositions using the step of: {}".format(self.step))
-        print("The drone should be moved in a straight line \nstarting from {}m to {}m excluding the last value \n({} total points).".format(self.step,self.max_distance,len(self.point_data)))
+        print("\n***************************************************\n\tDrone Max Range Finder\n***************************************************\n")           
+        print("Please move the drone manually in different \npositions using the step of {}m.".format(self.step))
+        print("The drone should be moved in a straight line \nstarting from {}m untill {}m excluding the last\nvalue ({} total points).".format(self.step,self.max_distance,len(self.points)))
         print("Please relax, this process is going to take \nquite some time.  Lets start! :D\n")
         print("***************************************************\n***************************************************\n")
 
@@ -689,8 +690,8 @@ class RangeFinder():
                 while invalid_input:
                     invalid_input = False
                     # The next 3 lines are creating the point graphic using text chars
-                    print("\t\t\t|\n\t\t  -*-   -*-\n\t\t    \ _ /\n\t     {_}\n\t    / | \\n\t -*-  | -*-\n\t      |\n\t     _M_\n\t0 --> 1 --> 2 --> X)
-                    print("\n\t  --> [ Next point:",str(self.points[index]),"] <-- \n")                    
+                    print("\n\t\t    -*-   -*-\n\t\t      \ _ /\n\t\t       {_}\n\t\t      / | \ \n\t\t   -*-  | -*-\n\t\t        |\n\t\t       _#_\n    X --> 1m --> 2m --> 3m --> 4m --> 5m --> ?")
+                    print("\n\t  --> [ Next point:",str(self.points[index]),"m ] <-- \n")                    
                     if self.manual_mode:
                         if index == 0:
                             user = input("Press [s] to start followed by [Enter] to start.")
@@ -747,7 +748,7 @@ def main():
 #    ardrone = Drone('AR.Drone 2.0','192.168.1.1',drone_type='Ardrone')
 #    anafi = Drone('Anafi','192.168.42.1',drone_type='Anafi')
     
-    virtual_env = Environment(x=12,x_num=5,x_padding=1,y=12,y_num=5,y_padding=1,z=4,z_num=4,z_padding=0.5,name='Test')
+#    virtual_env = Environment(x=12,x_num=5,x_padding=1,y=12,y_num=5,y_padding=1,z=4,z_num=4,z_padding=0.5,name='Test')
     
 #    rad1m = RadiationTracker(virtual_drone,degrees=360,axis='Roll',sound_mode=True,manual_mode=True,propeller_mode=True)
 #    rad1m.start()
@@ -755,12 +756,12 @@ def main():
 #    pinger_1 = SpatialPinger(anafi,virtual_env,sound_mode=True,manual_mode=True,propeller_mode=True)
 #    pinger_1.start()
 
-    ranger = RangeFinder()
-    
+    ranger = RangeFinder(virtual_drone,max_distance=6,step=1,name='First test',sound_mode=True,manual_mode=True,propeller_mode=True)
+    ranger.start()
 
     
-#    path = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RadiationPattern/NPY/Router_090620_031319_Roll@1m_OFF.npy'
-#    test = np.load(path)
-#    print(test)
+    path = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RangeFinder/NPY/Router_160620_013249@6m_ON.npy'
+    test = np.load(path)
+    print(test)
 if __name__ == '__main__':
     main()
