@@ -459,7 +459,7 @@ class RadiationTracker():
         #    Welcome message
         print("\n***************************************************\n\tDrone Radiation Pattern\n***************************************************\n")           
         print("Please rotate the drone manually in different \npositions using the step of: {}".format(self.step),self.degree_sign)
-        print("The drone should be rotated around X,Y and Z axis \nstarting from 0{} to {}{} excluding the last value \n({} points pes axis and {} total points).".format(self.degree_sign,self.degrees,self.degree_sign,int(self.degrees/self.step),int((self.degrees/self.step)*2)))
+        print("The drone should be rotated around X,Y and Z axis \nstarting from 0{} to {}{} excluding the last value \n({} points per axis and {} total points).".format(self.degree_sign,self.degrees,self.degree_sign,int(self.degrees/self.step),int((self.degrees/self.step)*2)))
         print("Please relax, this process is going to take \nquite some time.  Lets start! :D\n")
         print("***************************************************\n***************************************************\n")
 
@@ -630,27 +630,132 @@ class RangeFinder():
                 bit_rate = match.group(1)
             bitrate_.append(float(bit_rate))
         return {'bitrate' : round(sum(bitrate_)/len(bitrate_),2)}
-        
+
+    def wifiScan(self,point_index):
+#            WiFi network results
+            wifi_output_list = []
+            print("(PC): \t WIFI SCANNING...")
+            content = iwlist.scan(interface='wlp2s0') # Wifi module
+            for item in iwlist.parse(content):
+                item.update({'distance':self.points[point_index]})# Add angles
+                wifi_output_list.append(item)
+            return wifi_output_list
     
+    def exportCSV(self,output_dict,point_index):
+        '''Exprot CSV'''
+        headers = []
+        for item in output_dict[self.drone.name][0].keys():
+            headers.append(item)
+        with open(self.csvPath, mode='w') as csv_file:
+            writer = csv.DictWriter(csv_file, headers)
+            writer.writeheader()
+            for item in output_dict[self.drone.name]:
+                writer.writerow(item)
+        print('(CSV): \tSave values until ({}m).'.format(self.points[point_index]))
+    
+    def exportNPY(self,result,point_index):
+       '''Export NPY file '''
+#       Store the returned values from every point to a list of numpy arrays
+       for i,key in enumerate(self.output_keys):
+           self.point_data[i,point_index] = round(result[key],4)
+       np.save(self.npyPath, self.point_data)
+       print('(NPY): \tSave values till ({}m)'.format(self.points[point_index]))
+    
+    def exportJSON(self,output_dict,point_index):
+        '''Export JSON file '''
+        with open(self.jsonPath, 'w') as f:
+            json.dump(output_dict, f, indent=4)
+        print('(JSON):\tSave all values until ({}m).'.format(self.points[point_index]))
+    
+    def welcome(self):
+        #    Welcome message
+        print("\n***************************************************\n\tDrone Radiation Pattern\n***************************************************\n")           
+        print("Please move the drone manually in different \npositions using the step of: {}".format(self.step))
+        print("The drone should be moved in a straight line \nstarting from {}m to {}m excluding the last value \n({} total points).".format(self.step,self.max_distance,len(self.point_data)))
+        print("Please relax, this process is going to take \nquite some time.  Lets start! :D\n")
+        print("***************************************************\n***************************************************\n")
+
+    def start(self):
+        self.welcome()
+        pc_output_list = []
+        output_dict = {}
+        for index, point in enumerate(self.points):
+            if self.sound_mode: # play sound
+                play(self.soundFile)
+            repeat = True
+            while repeat:
+                repeat = False
+                invalid_input = True
+                while invalid_input:
+                    invalid_input = False
+                    # The next 3 lines are creating the point graphic using text chars
+                    print("\t\t\t|\n\t\t  -*-   -*-\n\t\t    \ _ /\n\t     {_}\n\t    / | \\n\t -*-  | -*-\n\t      |\n\t     _M_\n\t0 --> 1 --> 2 --> X)
+                    print("\n\t  --> [ Next point:",str(self.points[index]),"] <-- \n")                    
+                    if self.manual_mode:
+                        if index == 0:
+                            user = input("Press [s] to start followed by [Enter] to start.")
+                        else:
+                            user = input("Press [s] to start or [r] followed by [Enter] to repeat the measurement on this specific point.")
+                        if user == "s":
+                            repeat = False
+                            invalid_input = False
+                        elif user == "r":
+                            if index == 0:
+                                invalid_input = True
+                                print("You haven't started the measurement yet. Please press [s] to continue.")
+                            else:
+                                repeat = True
+                                invalid_input = False
+                        else:
+                            print("Acceptable values are 's' to start and 'r' to repeat.")
+                            invalid_input = True
+                
+                if self.propeller_mode and self.drone.drone_type == 'Ardrone':
+                    self.drone.drone.takeoff()
+                    sleep(1)
+                    print('(DRONE): \t TAKING OFF \t [propellers ON]')
+                    sleep(2)
+                    
+#                Combine Results
+                pc_result = {'distance':self.points[index], 'propellers':self.propellers}    # add the angle
+                pc_result.update(self.ping(count=10))        # "127.0.0.1",'192.168.42.98'
+                pc_result.update(self.signalStrength())      # Retreive wifi statistics
+                pc_result.update(self.bitrate())             # Retrieve bitrate
+                pc_output_list.append(pc_result)
+                output_dict[self.drone.name] = pc_output_list
+                
+                if self.savenpy_mode:
+                    self.exportNPY(pc_result,index) 
+                if self.savecsv_mode:
+                    self.exportCSV(output_dict,index) 
+                if self.savejson_mode:
+                    self.exportJSON(output_dict,index)
+                
+                if self.propeller_mode and self.drone.drone_type == 'Ardrone':
+                    self.drone.drone.land()
+                    sleep(1)
+                    self.drone.drone.land()
+                    print('(DRONE): \t LANDING \t [propellers OFF]')
+
 #  ############################
 #  ########### MAIN ###########
 #  ############################
 # XXX:
 def main():  
     
-#    virtual_drone = Drone('Router','192.168.1.1',drone_type='Other')
+    virtual_drone = Drone('Router','192.168.1.1',drone_type='Other')
 #    ardrone = Drone('AR.Drone 2.0','192.168.1.1',drone_type='Ardrone')
-    anafi = Drone('Anafi','192.168.42.1',drone_type='Anafi')
+#    anafi = Drone('Anafi','192.168.42.1',drone_type='Anafi')
     
     virtual_env = Environment(x=12,x_num=5,x_padding=1,y=12,y_num=5,y_padding=1,z=4,z_num=4,z_padding=0.5,name='Test')
     
 #    rad1m = RadiationTracker(virtual_drone,degrees=360,axis='Roll',sound_mode=True,manual_mode=True,propeller_mode=True)
 #    rad1m.start()
     
-    pinger_1 = SpatialPinger(anafi,virtual_env,sound_mode=True,manual_mode=True,propeller_mode=True)
-    pinger_1.start()
+#    pinger_1 = SpatialPinger(anafi,virtual_env,sound_mode=True,manual_mode=True,propeller_mode=True)
+#    pinger_1.start()
 
-
+    ranger = RangeFinder()
     
 
     
