@@ -109,7 +109,9 @@ class SpatialPinger():
         self.commonPath = "/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/SpatialPinger"
         self.npyPath = self.commonPath+"/NPY/{}_{}@{}heights_{}.npy".format(self.drone.name,self.time_stamp,len(self.environment.z_points),self.propellers)
         self.jsonPath = self.commonPath+"/JSON/{}_{}@{}heights_{}.json".format(self.drone.name,self.time_stamp,len(self.environment.z_points),self.propellers)
-        self.csvPath = self.commonPath+"/CSV/{}_{}@{}heights_{}.csv".format(self.drone.name,self.time_stamp,len(self.environment.z_points),self.propellers)
+        self.csvValuePath = self.commonPath+"/CSV/VAL_{}_{}@{}heights_{}.csv".format(self.drone.name,self.time_stamp,len(self.environment.z_points),self.propellers)
+        self.csvNetworkPath = self.commonPath+"/CSV/NET_{}_{}@{}heights_{}.csv".format(self.drone.name,self.time_stamp,len(self.environment.z_points),self.propellers)
+
         
 #        Load sound file
         self.soundFile_path = "siren.wav"
@@ -192,15 +194,25 @@ class SpatialPinger():
 
     def exportCSV(self,output_dict,x,y,z):
         '''Exprot CSV'''
+#        Export measurement values
         headers = []
         for item in output_dict[self.drone.name][0].keys():
             headers.append(item)
-        with open(self.csvPath, mode='w') as csv_file:
+        with open(self.csvValuePath, mode='w') as csv_file:
             writer = csv.DictWriter(csv_file, headers)
             writer.writeheader()
             for item in output_dict[self.drone.name]:
                 writer.writerow(item)
-        print('(CSV): \tSave values till point ({},{},{}).'.format(x,y,z))
+#        Export WiFi networks
+        headers = []
+        for item in output_dict['Networks'][0].keys():
+            headers.append(item)
+        with open(self.csvNetworkPath, mode='w') as csv_file:
+            writer = csv.DictWriter(csv_file, headers)
+            writer.writeheader()
+            for item in output_dict['Networks']:
+                writer.writerow(item)
+        print('(CSV): \tSave values and networks till point ({},{},{}).'.format(x,y,z))
     
     def exportNPY(self,output_dict,x,y,z):
        '''Export NPY file '''
@@ -279,6 +291,7 @@ class SpatialPinger():
                         pc_result.update(self.bitrate())            # Retrieve bitrate
                         pc_output_list.append(pc_result)
                         output_dict[self.drone.name] = pc_output_list
+                        output_dict['Networks'] = pc_output_list
                         
         #                Save to file
                         if self.savenpy_mode:
@@ -496,6 +509,8 @@ class RadiationTracker():
                 pc_result.update(self.bitrate())            # Retrieve bitrate
                 pc_output_list.append(pc_result)
                 output_dict[self.drone.name] = pc_output_list
+#                output_dict['Networks'] = pc_output_list
+                
                 
                 if self.savenpy_mode:
                     self.exportNPY(pc_result,index) 
@@ -516,13 +531,13 @@ class RadiationTracker():
 # XXX:
 def main():  
     
-    virtual_drone = Drone('Router','192.168.1.1',drone_type='Hey')
+    virtual_drone = Drone('Router','192.168.1.1',drone_type='Other')
     virtual_env = Environment(x=12,x_num=5,x_padding=1,y=12,y_num=5,y_padding=1,z=4,z_num=4,z_padding=0.5)
 #    rad1m = RadiationTracker(virtual_drone,degrees=360,axis='Roll',sound_mode=True,manual_mode=True,propeller_mode=True)
 #    rad1m.start()
 #    print(rad1m.point_data)
 #    
-    pinger_1 = SpatialPinger(virtual_drone,virtual_env,sound_mode=True,manual_mode=True)
+    pinger_1 = SpatialPinger(virtual_drone,virtual_env,sound_mode=True,manual_mode=False)
     pinger_1.start()
 #    print(pinger.point_data)    
     
