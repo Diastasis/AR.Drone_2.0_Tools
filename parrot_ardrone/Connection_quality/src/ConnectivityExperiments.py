@@ -31,6 +31,8 @@ class Drone():
     def __init__(self,drone_name,drone_ip,drone_type=None,pc_interface='wlp2s0'):
         self.name = drone_name
         self.ip = drone_ip
+#        Ardrone default IP is 192.168.1.1
+#        Anafi default IP is 192.168.42.1
         self.pc_interface = pc_interface
         self.drone_type = drone_type
         
@@ -309,7 +311,7 @@ class SpatialPinger():
 
 
 class RadiationTracker():
-    '''This class is estublishes all the neccessary functionality for the radiation pattern measurements'''
+    '''This class is establishes all the neccessary functionality for the radiation pattern measurements'''
 #XXX:
 # TODO:
 #        Fix the duplicate JSON entry when the user repeats a measurement
@@ -525,21 +527,130 @@ class RadiationTracker():
                     sleep(1)
                     self.drone.drone.land()
                     
+# XXX:
+class RangeFinder():
+    '''This class is establishes all the neccessary functionality for the finding the maximum flight range'''
+    def __init__(self,drone,max_distance,step=1,name='None', dbg_mode=True,manual_mode=True,savecsv_mode=True,figure_mode=False,sound_mode=True,savejson_mode=True,savenpy_mode=True,welcome_mode=True,propeller_mode=False):
+        self.drone = drone
+        self.max_distance = max_distance
+        self.step = step
+        self.name = name
+        
+        self.points = np.arange(0,max_distance,step).tolist()
+    
+        #        Set Modes
+        self.dbg_mode = dbg_mode
+        self.manual_mode = manual_mode
+        self.savecsv_mode = savecsv_mode
+        self.savejson_mode = savejson_mode
+        self.figure_mode = figure_mode
+        self.savenpy_mode = savenpy_mode
+        self.welcome_mode = welcome_mode
+        self.sound_mode = sound_mode
+        self.propeller_mode = propeller_mode
+        
+        if self.propeller_mode:
+            self.propellers='ON'
+        else:
+            self.propellers='OFF'
+            
+        #    File paths   
+        self.time_stamp = datetime.now().strftime("%d%m%y_%H%M%S")
+        self.commonPath = "/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RangeFinder"
+        self.jsonPath = self.commonPath+"/JSON/{}_{}@{}m_{}.json".format(self.drone.name,self.time_stamp,self.max_distance,self.propellers)
+        self.npyPath = self.commonPath+"/NPY/{}_{}@{}m_{}.npy".format(self.drone.name,self.time_stamp,self.max_distance,self.propellers)
+        self.csvPath = self.commonPath+"/CSV/{}_{}@{}m_{}.csv".format(self.drone.name,self.time_stamp,self.max_distance,self.propellers)
+    
+#        Load sound file
+        self.soundFile_path = "siren.wav"
+        self.soundFile = AudioSegment.from_file(self.soundFile_path, format="wav")
+        
+        #        Variable text descriptions
+        self.output_keys = ["packet_transmit", "packet_receive", "packet_loss_count", "packet_loss_rate", \
+                      "rtt_min", "rtt_avg", "rtt_max", "rtt_mdev", "packet_duplicate_count", "packet_duplicate_rate", \
+                      "measurement_count", "link_quality", "link_quatity_amount", "signal_dbm", "noise_dbm", "bitrate"]
+        
+        self.point_data = np.zeros((len(self.output_keys),len(self.points)))
+        print("New RangeFinder object is created!")
+
+    def ping(self, count=25):
+        """Parse ping output from PC's terminal"""
+        print("(PC): \t PINGING DRONE \t\t [{}]".format(self.drone.ip))
+        ping_parser = pingparsing.PingParsing()
+        transmitter = pingparsing.PingTransmitter()
+        transmitter.destination = self.drone.ip
+        transmitter.count = count
+        try:
+            return ping_parser.parse(transmitter.ping()).as_dict()
+        except:
+            print("(PC): Unable to ping the target IP!")
+            return {"destination": self.drone.ip, "packet_transmit": -999, "packet_receive": -999,
+                "packet_loss_count": -999, "packet_loss_rate": -999, "rtt_min": -999, "rtt_avg": -999,
+                "rtt_max": -999, "rtt_mdev": -999, "packet_duplicate_count": -999,"packet_duplicate_rate": -999}
+
+
+    def signalStrength(self, readings=1):
+        """Parse wifi output from PC's terminal"""
+        print("(PC): \t GETTING WIFI STATS \t [{}]".format(self.drone.pc_interface))
+        args = ["grep", "-i", self.drone.pc_interface,"/proc/net/wireless"]
+        link_,level_, noise_ = [], [], []
+        for _ in range(readings):
+            try:
+                link, level, noise = str(subprocess.Popen( args, stdout=subprocess.PIPE,stderr=subprocess.PIPE ).communicate())[16:35].replace(".","").strip().split()
+            except:
+                print("(PC): Unable to retrieve wifi data. Are you connected?") 
+                return {"measurement_count": readings, "link_quality": -999,"link_quatity_amount": -999,
+                "signal_dbm": -999, "signal_mw": -999, "noise_dbm": -999, "noise_mw": -999}
+    #       Add every value to a list
+            link_.append(int(link))
+            level_.append(int(level))
+            noise_.append(int(noise))
+        return {  #   Calculate the average values when neccessary and return a dictionary for every point. 
+                "measurement_count": readings,
+                "link_quality": sum(link_)/len(link_), 
+                "link_quatity_amount": int((sum(link_)/len(link_))*(10/7)),
+                "signal_dbm": sum(level_)/len(level_),
+                "noise_dbm": sum(noise_)/len(noise_)}
+                
+    def bitrate(self, readings=1):
+        '''Parse bitrate by iwlist wlp2s0 bitrate command from PC'''
+        print("(PC): \t GETTING BITRATE \t [{}]".format(self.drone.pc_interface))
+        bitrate_pattern = re.compile(r'Current Bit Rate[:=](\d+\.?\d+)') # Regular expression to parse the terminal output
+        args = ["iwlist",self.drone.pc_interface,"bitrate"]
+        bitrate_ = []
+        for _ in range(readings):
+            try:
+                my_string = str(subprocess.Popen( args, stdout=subprocess.PIPE,stderr=subprocess.PIPE ).communicate())
+                matches = bitrate_pattern.finditer(my_string)
+            except:
+                print("(PC) Unable to retrieve bitrate.")
+                return {'bitrate' : -999}
+            bit_rate = -999
+            for match in matches:
+                bit_rate = match.group(1)
+            bitrate_.append(float(bit_rate))
+        return {'bitrate' : round(sum(bitrate_)/len(bitrate_),2)}
+        
+    
 #  ############################
 #  ########### MAIN ###########
 #  ############################
 # XXX:
 def main():  
     
-    virtual_drone = Drone('Router','192.168.1.1',drone_type='Other')
-    virtual_env = Environment(x=12,x_num=5,x_padding=1,y=12,y_num=5,y_padding=1,z=4,z_num=4,z_padding=0.5)
+#    virtual_drone = Drone('Router','192.168.1.1',drone_type='Other')
+#    ardrone = Drone('AR.Drone 2.0','192.168.1.1',drone_type='Ardrone')
+    anafi = Drone('Anafi','192.168.42.1',drone_type='Anafi')
+    
+    virtual_env = Environment(x=12,x_num=5,x_padding=1,y=12,y_num=5,y_padding=1,z=4,z_num=4,z_padding=0.5,name='Test')
+    
 #    rad1m = RadiationTracker(virtual_drone,degrees=360,axis='Roll',sound_mode=True,manual_mode=True,propeller_mode=True)
 #    rad1m.start()
-#    print(rad1m.point_data)
-#    
-    pinger_1 = SpatialPinger(virtual_drone,virtual_env,sound_mode=False,manual_mode=True)
+    
+    pinger_1 = SpatialPinger(anafi,virtual_env,sound_mode=True,manual_mode=True,propeller_mode=True)
     pinger_1.start()
-#    print(pinger.point_data)    
+
+
     
 
     
