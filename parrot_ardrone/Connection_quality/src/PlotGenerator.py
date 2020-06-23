@@ -50,7 +50,7 @@ class Environment():
         
         self.debug = debug
         if self.debug:
-            print('Object: "',self.name,'" is created!')
+            print('Object: [',self.name,'] is created!')
     
 # XXX:
 class HeatmapVisualiser():
@@ -82,32 +82,47 @@ class HeatmapVisualiser():
     measurementPoint = (11, 11.5, 1)    # x,y,z in meters (laptop position)
     
     
-    def __init__(self, data, environment, name, comp=False):
+    def __init__(self, data, environment, name, propellers, comp=False, text=(None,None)):
         self.dataList = data
         self.droneName = name
         self.environment = environment
         self.distances = self.euclideanDist()
+        self.propellers = propellers
         self.objComp = comp
         self.barLim = (0,100)
         if comp:
             self.colormap = "jet"
+#            In case of comparison keep the names of the objects that are being compared
+            self.L_bartext,self.R_bartext = text
         else:
             self.colormap="inferno"
         self.groupPlot = False
         if self.debug:
-            print('Object: "',name,'" is created!')
+            print('Object: [',name,'] is created!')
             
     @classmethod
-    def form_Path(cls, path, environment, name):
+    def from_Path(cls, path, environment, name, propellers):
         '''Create an object by importing data from an external NPY file'''
         data = np.load(path)
-        return cls(data,environment,name)
+        return cls(data,environment,name,propellers)
     
     @classmethod
-    def from_Substruction(cls, obj1, obj2,environment, name):
+    def from_Substruction(cls, obj1, obj2,environment):
         '''Create a new object by substructing the data values of two other objects.'''
         data = obj1.dataList - obj2.dataList
-        return cls(data,environment,name,comp=True)
+        if obj1.droneName == obj2.droneName:
+            L_text = 'Propellers '+obj1.propellers
+            R_text = 'Propellers '+obj2.propellers
+            name = obj1.droneName
+            propellers = obj1.propellers+" vs "+obj2.propellers
+        elif obj1.propellers == obj1.propellers:
+            L_text = obj1.droneName
+            R_text = obj2.droneName
+            name = obj1.droneName+" vs "+obj2.droneName
+            propellers = obj1.propellers
+        else:
+            raise ValueError("The drones names nor the proppellers value match.")
+        return cls(data, environment, name, propellers, comp=True, text=(L_text,R_text))
     
     def euclideanDist(self):
         '''This function returns the euclidean distances from the measurement 
@@ -470,11 +485,16 @@ class HeatmapVisualiser():
 
     def varGroupHeatmap(self,inputVar,heightList, title, outputName):
         '''Plot in one figure all the layers (heights) of a variable'''
+        offset = 0
         fig=plt.figure(figsize=(8*len(inputVar),10))
         for ii,height in enumerate(heightList):
             
             ax = fig.add_subplot(1,len(inputVar),ii+1)
-            ax.set_title(self.droneName + " ({}m)\n{}".format(height, title))
+            if self.objComp:
+                ax.set_title(self.droneName + " propellers {} ({}m)\n{}".format(self.propellers,height,title))#, title))
+            else:
+                ax.set_title(self.droneName + " propellers {} ({}m)\n{}".format(self.propellers,height,title))#, title))
+                
             plt.subplots_adjust(left=0.0, right=0.5, bottom=0.5, top=1.0)
             
             ax.set_xlabel("X (meters)")
@@ -487,8 +507,15 @@ class HeatmapVisualiser():
             imgplot.set_clim(self.barLim)        
             mybar = fig.colorbar(imgplot, ax=ax,orientation='horizontal',shrink=0.95,pad=0.08)#.set_label("AR.Drone 2.0                                                                                             Anafi", labelpad=-50)
             if self.objComp:
-                mybar.set_label("<  AR.Drone 2.0                                                      Anafi  >", labelpad=-55)
-                        
+                mybar.set_label(title, labelpad=-55)
+#                mybar.set_label("< "+self.obj1Name+"   "+title+"   "+self.obj2Name+" >", labelpad=-55)
+                plt.figtext(0.034+offset,0.17,self.R_bartext)
+                plt.figtext(0.28+offset,0.17,self.L_bartext)
+                offset += 0.332
+
+            else:
+                mybar.set_label(title, labelpad=-55)   
+#                plt.figtext(0.5,0.5,'figtext_2')                    
             for i,x in enumerate(self.environment.widths):
                 for j,y in enumerate(self.environment.lengths):
                     ax.scatter(x,y, alpha=0.1, s=800, color="w") # cmap='jet' - plot the white circles 
@@ -519,19 +546,18 @@ class HeatmapVisualiser():
         imgplot.set_clim(self.barLim)
         mybar = fig.colorbar(imgplot, ax=ax, orientation='horizontal',shrink=0.75,pad=0.08)
         if self.objComp:
-                mybar.set_label("AR.Drone 2.0                                                                                                                                          Anafi", labelpad=-55)
+#            mybar.set_label("< "+self.obj1Name+"   "+title+"   "+self.obj2Name+" >", labelpad=-55)
+            mybar.set_label(title, labelpad=-55)
+            plt.figtext(0.15,0.16,self.R_bartext)
+            plt.figtext(0.75,0.16,self.L_bartext)
+        else:
+            mybar.set_label(title, labelpad=-55)
 
         for i,x in enumerate(self.environment.widths):
             for j,y in enumerate(self.environment.lengths):
                 ax.scatter(x,y, alpha=0.1, s=800, color="w") # cmap='jet' - plot the white circles 
                 ax.text(y, x, round(inputVar[i][j],2), ha="center", va="center", color="w") # - plot the numbers
         ax.scatter(self.measurementPoint[0],self.measurementPoint[1], alpha=0.5, s=100, color="b", marker="X") # - plot laptop position
-
-#        for x in range(len(inputVar)):
-#            for y in range(len(inputVar[0])):
-#                ax.scatter(x,y, alpha=0.1, s=800, color="w") # cmap='jet'
-#                ax.text(y, x, round(inputVar[x][y],2), ha="center", va="center", color="w")
-#        ax.scatter(self.measurementPoint[0],self.measurementPoint[1], alpha=0.5, s=100, color="b", marker="X")
         
         plt.tight_layout() # This solves the issue of the missing titles in the exported png file
         self.savePng(fig,self.outputPath,outputName,height)
@@ -623,16 +649,39 @@ def newMain():
 
     
     anafiPath_off = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/SpatialPinger/NPY/Fix_Anafi_160620_143935@3heights_OFF.npy'
-    anafi_off = HeatmapVisualiser.form_Path(anafiPath_off,greenhouse, "Anafi - Propellers OFF")
-#    print('OFF: ',anafi_off.dataList)
-#    print()
-
+    anafi_off = HeatmapVisualiser.from_Path(anafiPath_off,greenhouse, "Parrot Anafi", "OFF")
+#    anafi_off.heatmapAll(groupPlot=True)
+    
     anafiPath_on = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/SpatialPinger/NPY/Fix_Anafi_160620_143935@3heights_ON.npy'
-    anafi_on = HeatmapVisualiser.form_Path(anafiPath_on,greenhouse, "Anafi - ropellers ON")
-#    print('ON: ',anafi_on.dataList)
+    anafi_on = HeatmapVisualiser.from_Path(anafiPath_on,greenhouse, "Parrot Anafi","ON")
+#    anafi_on.heatmapAll(groupPlot=True)
 
-    anafi_on_vs_off = HeatmapVisualiser.from_Substruction(anafi_off,anafi_on,greenhouse,'Anafi - Propellers ON vs OFF')
-    anafi_on_vs_off.heatmapAll(groupPlot=False)
+    anafi_on_vs_off = HeatmapVisualiser.from_Substruction(anafi_off,anafi_on,greenhouse)
+#    anafi_on_vs_off.heatmapAll(groupPlot=True)
+
+
+
+    ardronePath_off = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/SpatialPinger/NPY/Fix_AR.Drone_2.0_160620_114909@3heights_OFF.npy'
+    ardrone_off = HeatmapVisualiser.from_Path(ardronePath_off,greenhouse, 'AR.Drone 2.0','OFF')
+#    ardrone_off.heatmapAll(groupPlot=True)
+
+    ardronePath_on = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/SpatialPinger/NPY/Fix_AR.Drone_2.0_160620_114909@3heights_ON.npy'
+    ardrone_on = HeatmapVisualiser.from_Path(ardronePath_on,greenhouse, 'AR.Drone 2.0','ON')
+#    ardrone_on.heatmapAll(groupPlot=True)
+
+    ardrone_on_vs_off = HeatmapVisualiser.from_Substruction(ardrone_off,ardrone_on,greenhouse)
+#    ardrone_on_vs_off.heatmapAll(groupPlot=True)
+
+
+
+    ardrone_vs_anafi_off = HeatmapVisualiser.from_Substruction(ardrone_off,anafi_off,greenhouse)
+#    ardrone_vs_anafi_off.heatmapAll(groupPlot=True)
+
+    ardrone_vs_anafi_on = HeatmapVisualiser.from_Substruction(ardrone_on,anafi_on,greenhouse)
+    ardrone_vs_anafi_on.heatmapAll(groupPlot=False)
+
+
+
 
 #    ardrone.HeatmapAll(groupPlot=True)
 #    ardrone.HeatmapTx(groupPlot=True)
@@ -687,7 +736,7 @@ def  main():
     
 ##### GENERATE HEAT-MAPS FOR ARDRONE #####
     ardrone_path = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/NPY/PC2DR_300320_152111_(full)_(ARDRONE_FIXED_FINAL).npy'
-    ardrone = heatmapVisualiser.form_Path(ardrone_path, "AR.Drone 2.0")
+    ardrone = heatmapVisualiser.from_Path(ardrone_path, "AR.Drone 2.0")
 #    ardrone.heatmapAll(groupPlot=True)
 #    ardrone.heatmapTx(groupPlot=True)
 #    ardrone.heatmapRx(groupPlot=True)
@@ -708,7 +757,7 @@ def  main():
 
 ##### GENERATE HEAT-MAPS FOR ANAFI #####
     anafi_path = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/NPY/PC2DR_310320_150126_(full)_(ANAFI_FIXED_FINAL).npy'
-    anafi = heatmapVisualiser.form_Path(anafi_path, "Anafi")
+    anafi = heatmapVisualiser.from_Path(anafi_path, "Anafi")
 #    anafi.heatmapAll(groupPlot=True)
 #    anafi.heatmapTx(groupPlot=True)
 #    anafi.heatmapRx(groupPlot=True)
