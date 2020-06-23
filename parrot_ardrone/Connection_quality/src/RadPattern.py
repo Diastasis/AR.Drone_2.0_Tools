@@ -37,16 +37,16 @@ class Drone():
         if self.drone_type == 'Ardrone':
             self.drone = ARDroneLib.Drone()
         elif self.drone_type == 'Anafi':
-            pass
+            self.drone = None
+        elif self.drone_type == 'Other':
+            self.drone = None
         else:
-            print('The drone type is not specified!')
-        
+            raise ValueError('Plese choose a drone type: Ardrone, Anafi, Other')
         print(self.name,"is created!")
 
 #XXX:
 # TODO:
 #        Fix the duplicate JSON entry when the user repeats a measurement
-#        Implement the propeller functionality
         
 class RadiationTracker():
     '''This class is estublishes all the neccessary functionality for the radiation pattern measurements'''
@@ -233,15 +233,15 @@ class RadiationTracker():
                             invalid_input = True
                 
                 if self.propeller_mode:
-                    self.drone.drone.takeoff()
-                    sleep(1)
-                    self.drone.drone.takeoff()
-                    print('(DRONE): \t TAKING OFF \t [propellers ON]')
-                    sleep(2)
+                    if self.drone.drone_type =='Ardrone':
+                        self.drone.drone.takeoff()
+                        sleep(1)
+                        print('(DRONE): \t TAKING OFF \t [propellers ON]')
+                        sleep(2)
                     
 #                Combine Results
                 pc_result = {'radius':self.radius,'angle':self.points[index], 'axis':self.axis, 'propellers':self.propellers}    # add the angle
-                pc_result.update(self.ping(count=3))        # "127.0.0.1",'192.168.42.98'
+                pc_result.update(self.ping(count=10))        # "127.0.0.1",'192.168.42.98'
                 pc_result.update(self.signalStrength())     # Retreive wifi statistics
                 pc_result.update(self.bitrate())            # Retrieve bitrate
                 pc_output_list.append(pc_result)
@@ -255,18 +255,24 @@ class RadiationTracker():
                     self.exportJSON(output_dict,index)
                 
                 if self.propeller_mode:
-                    self.drone.drone.land()
-                    print('(DRONE): \t LANDING \t [propellers OFF]')
-                    sleep(1)
-                    self.drone.drone.land()
+                    if self.drone.drone_type =='Ardrone':
+                        self.drone.drone.land()
+                        print('(DRONE): \t LANDING \t [propellers OFF]')
+                        sleep(1)
+                        self.drone.drone.land()
                     
 #  ############################
 #  ########### MAIN ###########
 #  ############################
 def main():  
     
-    virtual_drone = Drone('Router','192.168.1.1',drone_type='Ardrone')
-    rad1m = RadiationTracker(virtual_drone,degrees=60,axis='Roll',sound_mode=True,manual_mode=True,propeller_mode=True)
+    degrees = int(input('Please insert the number of degrees: '))
+    step = int(input('Please choose a step: '))
+    axis = input('Please choose axis (Pitch,Roll,Yaw): ')
+    radius = int(input('Please insert radius: '))
+    
+    virtual_drone = Drone('Router','192.168.1.1',drone_type='Other')
+    rad1m = RadiationTracker(virtual_drone,degrees=degrees,axis=axis,step=step,radius=radius,sound_mode=False,manual_mode=True,propeller_mode=True)
     rad1m.start()
     print(rad1m.point_data)
 #    path = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RadiationPattern/NPY/Router_090620_031319_Roll@1m_OFF.npy'
