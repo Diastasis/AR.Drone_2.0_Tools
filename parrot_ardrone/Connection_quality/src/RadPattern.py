@@ -18,8 +18,6 @@ from pydub.playback import play
 from datetime import datetime
 import json
 import csv
-import ARDroneLib.ARDroneLib as ARDroneLib
-from time import sleep
 
 import sys
 np.set_printoptions(threshold=sys.maxsize)
@@ -254,8 +252,7 @@ class RadiationTracker():
                 if self.savejson_mode:
                     self.exportJSON(output_dict,index)
                 
-                if self.propeller_mode:
-                    if self.drone.drone_type =='Ardrone':
+                if self.propeller_mode and self.drone.drone_type =='Ardrone':
                         self.drone.drone.land()
                         print('(DRONE): \t LANDING \t [propellers OFF]')
                         sleep(1)
