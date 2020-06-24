@@ -6,7 +6,6 @@ Created on Sat Jun  6 22:50:47 2020
 @author: ros
 """
 
-from time import sleep
 import pingparsing # https://pypi.org/project/pingparsing/
 import iwlist # https://github.com/iancoleman/python-iwlist
 import numpy as np
@@ -17,6 +16,8 @@ from pydub.playback import play
 from datetime import datetime
 import json
 import csv
+import ARDroneLib.ARDroneLib as ARDroneLib
+from time import sleep
 
 import sys
 np.set_printoptions(threshold=sys.maxsize)
@@ -29,27 +30,34 @@ class Drone():
         self.name = drone_name
         self.ip = drone_ip
         self.pc_interface = pc_interface
-        if drone_type == 'Ardrone' or drone_type == 'Anafi' or drone_type == 'Other':
-            self.drone_type = drone_type
+        self.drone_type = drone_type
+        
+        if self.drone_type == 'Ardrone':
+            self.drone = ARDroneLib.Drone()
+        elif self.drone_type == 'Anafi':
+            self.drone = None
+        elif self.drone_type == 'Other':
+            self.drone = None
         else:
             raise ValueError('Plese choose a drone type: Ardrone, Anafi, Other')
         print(self.name,"is created!")
 
-#XXX:
 # TODO:
 #        Fix the duplicate JSON entry when the user repeats a measurement
-        
+# XXX:
 class RangeFinder():
-    '''This class is estublishes all the neccessary functionality for finding the maximum range where the connection between the drone and the controller is reliable.'''
-    def __init__(self,drone, degrees=360, step=15, radius=1,axis='Yaw',dbg_mode=True,manual_mode=True,savecsv_mode=True,figure_mode=False,sound_mode=True,savejson_mode=True,savenpy_mode=True,welcome_mode=True,propeller_mode=False):
+    '''This class is establishes all the neccessary functionality for the finding the maximum flight range'''
+    def __init__(self,drone,max_distance,step=1,offset=0,name='None', dbg_mode=True,manual_mode=True,savecsv_mode=True,figure_mode=False,sound_mode=True,savejson_mode=True,savenpy_mode=True,welcome_mode=True,propeller_mode=False):
         self.drone = drone
-        self.degrees = degrees
+        self.max_distance = max_distance
         self.step = step
-        self.points = np.arange(0,degrees,step).tolist()
-        self.radius=radius
-        self.axis = axis # Pitch/Roll/Yaw (X,Y,Z axis rotation)
-        self.degree_sign = u'\N{DEGREE SIGN}' # This is the unicode representations of the degree symbol
+        self.name = name
+        self.offset = offset
         
+        self.points = np.arange(step,max_distance,step).tolist() # convert the generated points from numpy to normal list
+        self.points.append(max(self.points)+step)                # This is a tric to include the last point
+        print(self.points)
+    
         #        Set Modes
         self.dbg_mode = dbg_mode
         self.manual_mode = manual_mode
@@ -60,7 +68,7 @@ class RangeFinder():
         self.welcome_mode = welcome_mode
         self.sound_mode = sound_mode
         self.propeller_mode = propeller_mode
-
+        
         if self.propeller_mode:
             self.propellers='ON'
         else:
@@ -68,12 +76,12 @@ class RangeFinder():
             
         #    File paths   
         self.time_stamp = datetime.now().strftime("%d%m%y_%H%M%S")
-        self.commonPath = "/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RadiationPattern"
-        self.jsonPath = self.commonPath+"/JSON/{}_{}_{}@{}m_{}.json".format(self.drone.name,self.time_stamp,self.axis,self.radius,self.propellers)
-        self.npyPath = self.commonPath+"/NPY/{}_{}_{}@{}m_{}.npy".format(self.drone.name,self.time_stamp,self.axis,self.radius,self.propellers)
-        self.csvPath = self.commonPath+"/CSV/{}_{}_{}@{}m_{}.csv".format(self.drone.name,self.time_stamp,self.axis,self.radius,self.propellers)
-        
-        #        Load sound file
+        self.commonPath = "/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RangeFinder"
+        self.jsonPath = self.commonPath+"/JSON/{}_{}_{}@{}m_{}.json".format(self.drone.name, self.name, self.time_stamp,self.max_distance,self.propellers)
+        self.npyPath = self.commonPath+"/NPY/{}_{}_{}@{}m_{}.npy".format(self.drone.name, self.name, self.time_stamp,self.max_distance,self.propellers)
+        self.csvPath = self.commonPath+"/CSV/{}_{}_{}@{}m_{}.csv".format(self.drone.name, self.name, self.time_stamp,self.max_distance,self.propellers)
+    
+#        Load sound file
         self.soundFile_path = "siren.wav"
         self.soundFile = AudioSegment.from_file(self.soundFile_path, format="wav")
         
@@ -83,8 +91,7 @@ class RangeFinder():
                       "measurement_count", "link_quality", "link_quatity_amount", "signal_dbm", "noise_dbm", "bitrate"]
         
         self.point_data = np.zeros((len(self.output_keys),len(self.points)))
-        print("New RadiationTracker object is created!")
-
+        print("New RangeFinder object is created!")
 
     def ping(self, count=25):
         """Parse ping output from PC's terminal"""
@@ -143,18 +150,18 @@ class RangeFinder():
                 bit_rate = match.group(1)
             bitrate_.append(float(bit_rate))
         return {'bitrate' : round(sum(bitrate_)/len(bitrate_),2)}
-    
-    def wifiScan(self,angle_index):
+
+    def wifiScan(self,point_index):
 #            WiFi network results
             wifi_output_list = []
             print("(PC): \t WIFI SCANNING...")
             content = iwlist.scan(interface='wlp2s0') # Wifi module
             for item in iwlist.parse(content):
-                item.update({'angle':self.points[angle_index]})# Add angles
+                item.update({'distance':self.points[point_index]})# Add angles
                 wifi_output_list.append(item)
             return wifi_output_list
     
-    def exportCSV(self,output_dict,angle_index):
+    def exportCSV(self,output_dict,point_index):
         '''Exprot CSV'''
         headers = []
         for item in output_dict[self.drone.name][0].keys():
@@ -164,27 +171,27 @@ class RangeFinder():
             writer.writeheader()
             for item in output_dict[self.drone.name]:
                 writer.writerow(item)
-        print('(CSV): \tSave values until angle ({}{}).'.format(self.points[angle_index],self.degree_sign))
+        print('(CSV): \tSave values until ({}m).'.format(self.points[point_index]))
     
-    def exportNPY(self,result,angle_index):
+    def exportNPY(self,result,point_index):
        '''Export NPY file '''
 #       Store the returned values from every point to a list of numpy arrays
        for i,key in enumerate(self.output_keys):
-           self.point_data[i,angle_index] = round(result[key],4)
+           self.point_data[i,point_index] = round(result[key],4)
        np.save(self.npyPath, self.point_data)
-       print('(NPY): \tfile for angle {}{} is updated!'.format(self.points[angle_index],self.degree_sign))
+       print('(NPY): \tSave values till ({}m)'.format(self.points[point_index]))
     
-    def exportJSON(self,output_dict,angle_index):
+    def exportJSON(self,output_dict,point_index):
         '''Export JSON file '''
         with open(self.jsonPath, 'w') as f:
             json.dump(output_dict, f, indent=4)
-        print('(JSON):\tSave all values until angle ({}{}).'.format(self.points[angle_index],self.degree_sign))
+        print('(JSON):\tSave all values until ({}m).'.format(self.points[point_index]))
     
     def welcome(self):
         #    Welcome message
-        print("\n***************************************************\n\tDrone Radiation Pattern\n***************************************************\n")           
-        print("Please rotate the drone manually in different \npositions using the step of: {}".format(self.step),self.degree_sign)
-        print("The drone should be rotated around X,Y and Z axis \nstarting from 0{} to {}{} excluding the last value \n({} points pes axis and {} total points).".format(self.degree_sign,self.degrees,self.degree_sign,int(self.degrees/self.step),int((self.degrees/self.step)*2)))
+        print("\n***************************************************\n\tDrone Max Range Finder\n***************************************************\n")           
+        print("Please move the drone manually in different \npositions using the step of {}m.".format(self.step))
+        print("The drone should be moved in a straight line \nstarting from {}m untill {}m including the last\nvalue ({} total points).".format(self.step,self.max_distance,len(self.points)))
         print("Please relax, this process is going to take \nquite some time.  Lets start! :D\n")
         print("***************************************************\n***************************************************\n")
 
@@ -201,9 +208,9 @@ class RangeFinder():
                 invalid_input = True
                 while invalid_input:
                     invalid_input = False
-                    # The next 3 lines are creating the angle graphic using text chars
-                    print("\t\t\t|\n\t\t    _ - | - _\n\t\t -      |      -\n\t       '        |        '\n\t     '          |          '\n\t   /            |            \ \n\t  ,             |             ,\n\t<---------------+--------------->")
-                    print("\n\t  --> [ Next point:",str(self.points[index])+self.degree_sign,"] <-- \n")                    
+                    # The next 3 lines are creating the point graphic using text chars
+                    print("\n\t\t    -*-   -*-\n\t\t      \ _ /\n\t\t       {_}\n\t\t      / | \ \n\t\t   -*-  | -*-\n\t\t        |\n\t\t       _#_\n    X --> 1m --> 2m --> 3m --> 4m --> 5m --> Max")
+                    print("\n\t  --> [ Next point:",str(self.points[index]),"m ] <-- \n")                    
                     if self.manual_mode:
                         if index == 0:
                             user = input("Press [s] to start followed by [Enter] to start.")
@@ -223,18 +230,17 @@ class RangeFinder():
                             print("Acceptable values are 's' to start and 'r' to repeat.")
                             invalid_input = True
                 
-                if self.propeller_mode:
-                    if self.drone.drone_type =='Ardrone':
-                        self.drone.drone.takeoff()
-                        sleep(1)
-                        print('(DRONE): \t TAKING OFF \t [propellers ON]')
-                        sleep(2)
+                if self.propeller_mode and self.drone.drone_type == 'Ardrone':
+                    self.drone.drone.takeoff()
+                    sleep(1)
+                    print('(DRONE): \t TAKING OFF \t [propellers ON]')
+                    sleep(2)
                     
 #                Combine Results
-                pc_result = {'radius':self.radius,'angle':self.points[index], 'axis':self.axis, 'propellers':self.propellers}    # add the angle
+                pc_result = {'distance':self.points[index], 'propellers':self.propellers}    # add the angle
                 pc_result.update(self.ping(count=10))        # "127.0.0.1",'192.168.42.98'
-                pc_result.update(self.signalStrength())     # Retreive wifi statistics
-                pc_result.update(self.bitrate())            # Retrieve bitrate
+                pc_result.update(self.signalStrength())      # Retreive wifi statistics
+                pc_result.update(self.bitrate())             # Retrieve bitrate
                 pc_output_list.append(pc_result)
                 output_dict[self.drone.name] = pc_output_list
                 
@@ -245,29 +251,25 @@ class RangeFinder():
                 if self.savejson_mode:
                     self.exportJSON(output_dict,index)
                 
-                if self.propeller_mode:
-                    if self.drone.drone_type =='Ardrone':
-                        self.drone.drone.land()
-                        print('(DRONE): \t LANDING \t [propellers OFF]')
-                        sleep(1)
-                        self.drone.drone.land()
+                if self.propeller_mode and self.drone.drone_type == 'Ardrone':
+                    self.drone.drone.land()
+                    sleep(1)
+                    self.drone.drone.land()
+                    print('(DRONE): \t LANDING \t [propellers OFF]')
                     
 #  ############################
 #  ########### MAIN ###########
 #  ############################
 def main():  
-    
-    degrees = int(input('Please insert the number of degrees: '))
-    step = int(input('Please choose a step: '))
-    axis = input('Please choose axis (Pitch,Roll,Yaw): ')
-    radius = int(input('Please insert radius: '))
-    
+
     virtual_drone = Drone('Router','192.168.1.1',drone_type='Other')
-    rad1m = RadiationTracker(virtual_drone,degrees=degrees,axis=axis,step=step,radius=radius,sound_mode=False,manual_mode=True,propeller_mode=True)
-    rad1m.start()
-    print(rad1m.point_data)
-#    path = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RadiationPattern/NPY/Router_090620_031319_Roll@1m_OFF.npy'
-#    test = np.load(path)
-#    print(test)
+    
+    distance = float(input('Please insert maximum distance: '))
+    step = float(input('Please choose a step: '))
+    name = input('Please choose a name: ')
+        
+    ranger = RangeFinder(virtual_drone,max_distance=distance,step=step,name=name, sound_mode=False, manual_mode=True, propeller_mode=False)
+    ranger.start()  
+
 if __name__ == '__main__':
     main()
