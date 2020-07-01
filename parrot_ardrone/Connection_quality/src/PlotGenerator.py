@@ -1,6 +1,9 @@
 import numpy as np
+import matplotlib.tri as tri
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+from mpl_toolkits.mplot3d import axes3d
+from matplotlib import cm
 import sys
 np.set_printoptions(threshold=sys.maxsize)
 #np.set_printoptions(threshold=np.inf)
@@ -575,42 +578,188 @@ class HeatmapVisualiser():
 
 
 def newMain():
-    
-#   Create an environment object to group the diamentions of the greenhouse    
-    greenhouse = Environment(name='Greenhouse', x=12,x_num=5,x_offset=1,y=12,y_num=5,y_offset=1,z=2.5,z_num=3,z_offset=0.5)
-
-    
-    anafiPath_off = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/SpatialPinger/NPY/Fix_Anafi_160620_143935@3heights_OFF.npy'
-    anafi_off = HeatmapVisualiser.from_Path(anafiPath_off,greenhouse, "Parrot Anafi", "OFF")
+   
+   ############################## 
+   ##### GENERATE HEATMATPS #####
+   ##############################
+   
+##   Create an environment object to group the diamentions of the greenhouse    
+#    greenhouse = Environment(name='Greenhouse', x=12,x_num=5,x_offset=1,y=12,y_num=5,y_offset=1,z=2.5,z_num=3,z_offset=0.5)
+#
+#    
+#    anafiPath_off = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/SpatialPinger/NPY/Fix_Anafi_160620_143935@3heights_OFF.npy'
+#    anafi_off = HeatmapVisualiser.from_Path(anafiPath_off,greenhouse, "Parrot Anafi", "OFF")
 #    anafi_off.heatmapAll(groupPlot=True)
+#    
+#    anafiPath_on = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/SpatialPinger/NPY/Fix_Anafi_160620_143935@3heights_ON.npy'
+#    anafi_on = HeatmapVisualiser.from_Path(anafiPath_on,greenhouse, "Parrot Anafi","ON")
+##    anafi_on.heatmapAll(groupPlot=True)
+#
+#    anafi_on_vs_off = HeatmapVisualiser.from_Substruction(anafi_off,anafi_on,greenhouse)
+##    anafi_on_vs_off.heatmapAll(groupPlot=True)
+#
+#
+#
+#    ardronePath_off = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/SpatialPinger/NPY/Fix_AR.Drone_2.0_160620_114909@3heights_OFF.npy'
+#    ardrone_off = HeatmapVisualiser.from_Path(ardronePath_off,greenhouse, 'AR.Drone 2.0','OFF')
+##    ardrone_off.heatmapAll(groupPlot=True)
+#
+#    ardronePath_on = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/SpatialPinger/NPY/Fix_AR.Drone_2.0_160620_114909@3heights_ON.npy'
+#    ardrone_on = HeatmapVisualiser.from_Path(ardronePath_on,greenhouse, 'AR.Drone 2.0','ON')
+##    ardrone_on.heatmapAll(groupPlot=True)
+#
+#    ardrone_on_vs_off = HeatmapVisualiser.from_Substruction(ardrone_off,ardrone_on,greenhouse)
+##    ardrone_on_vs_off.heatmapAll(groupPlot=True)
+#
+#
+#
+#    ardrone_vs_anafi_off = HeatmapVisualiser.from_Substruction(ardrone_off,anafi_off,greenhouse)
+##    ardrone_vs_anafi_off.heatmapAll(groupPlot=True)
+#
+#    ardrone_vs_anafi_on = HeatmapVisualiser.from_Substruction(ardrone_on,anafi_on,greenhouse)
+#    ardrone_vs_anafi_on.heatmapAll(groupPlot=False)
     
-    anafiPath_on = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/SpatialPinger/NPY/Fix_Anafi_160620_143935@3heights_ON.npy'
-    anafi_on = HeatmapVisualiser.from_Path(anafiPath_on,greenhouse, "Parrot Anafi","ON")
-#    anafi_on.heatmapAll(groupPlot=True)
+   
+   
+   #################################### 
+   ##### GENERATE MAX RANGE PLOTS #####
+   ####################################
+   
+   
+#    variables = 12
+#    # Greenhouse
+#    pathAnafi_OFF = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RangeFinder/NPY/Anafi_Greenhouse_240620_141100@120.0m_OFF.npy'
+#    pathAnafi_ON = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RangeFinder/NPY/Anafi_Greenhouse_240620_141120@120.0m_ON.npy'
+#    pathArdrone_OFF = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RangeFinder/NPY/AR.Drone 2.0_Greenhouse_240620_152747@120.0m_OFF.npy'
+#    pathArdrone_ON = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RangeFinder/NPY/AR.Drone 2.0_Greenhouse_240620_152738@120.0m_ON.npy'
+#    
+#    # Field
+#    
+#    
+#    Anafi_OFF = np.load(pathAnafi_OFF)
+#    Anafi_ON = np.load(pathAnafi_ON)
+#    Ardrone_OFF = np.load(pathArdrone_OFF)
+#    Ardrone_ON = np.load(pathArdrone_ON)
+#    
+#    
+#    max_distance = 120
+#    step = max_distance/len(Anafi_OFF[variables])
+##    print('step: ',step)
+#    range_distances = np.arange(step,max_distance,step).tolist() # convert the generated points from numpy to normal list
+#    range_distances.append(max(range_distances)+step)                # This is a trick to include the last point  
+##    print('range_distances: ',range_distances)
+#       
+#    
+#    fig = plt.figure(figsize=(10,10))
+#    plt.plot(range_distances,Anafi_OFF[variables],range_distances,Anafi_ON[variables],range_distances,Ardrone_OFF[variables],range_distances,Ardrone_ON[variables])
+#
+#
+#
+#    # Field
+#    pathAnafi_OFF = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RangeFinder/NPY/Anafi_Field_260620_083042@120.0m_OFF.npy'
+#    pathAnafi_ON = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RangeFinder/NPY/Anafi_Field_260620_083121@120.0m_ON.npy'
+#    pathArdrone_OFF = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RangeFinder/NPY/Ardrone_Field_260620_091515@120.0m_OFF.npy'
+#    pathArdrone_ON = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RangeFinder/NPY/Ardrone_Field_260620_091529@120.0m_ON.npy'
+#    
+#    Anafi_OFF = np.load(pathAnafi_OFF)
+#    Anafi_ON = np.load(pathAnafi_ON)
+#    Ardrone_OFF = np.load(pathArdrone_OFF)
+#    Ardrone_ON = np.load(pathArdrone_ON)
+#    
+#    fig2 = plt.figure(figsize=(10,10))
+#    plt.plot(range_distances,Anafi_OFF[variables],range_distances,Anafi_ON[variables],range_distances,Ardrone_OFF[variables],range_distances,Ardrone_ON[variables])
+#    
+#    
 
-    anafi_on_vs_off = HeatmapVisualiser.from_Substruction(anafi_off,anafi_on,greenhouse)
-#    anafi_on_vs_off.heatmapAll(groupPlot=True)
+   #################################### 
+   ##### GENERATE SPIDER PLOTS ########
+   ####################################
+   
+    variables = 13
+    
+    angles = np.arange(0,360,15).tolist()
+    angles.append(angles[0]) # The plot is a circle, so we need to "complete the loop" and append the start value to the end.
+    norm_angles =[]
+    # Normalise angles - Convert degrees to radians
+    for angle in angles: 
+        norm_angles.append(np.deg2rad(angle)) #57.32
+    
+    # Anafi paths
+    pathAnafi_yaw = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RadiationPattern/NPY/Anafi_260620_103824_Yaw@1m_ON.npy'
+    pathAnafi_pitch = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RadiationPattern/NPY/Anafi_260620_105313_Pitch@1m_ON.npy'
+    pathAnafi_roll = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RadiationPattern/NPY/Anafi_260620_110448_Roll@1m_ON.npy'
+
+    # Ardrone paths
+    pathArdrone_yaw = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RadiationPattern/NPY/Ardrone_260620_094950_Yaw@1m_ON.npy'
+    pathArdrone_pitch = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RadiationPattern/NPY/Ardrone_260620_101443_Pitch@1m_ON.npy'
+    pathArdrone_roll = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/RadiationPattern/NPY/Ardrone_260620_100228_Roll@1m_ON.npy'
+
+    # Anafi data    
+    anafi_yaw = np.load(pathAnafi_yaw)
+    anafi_pitch = np.load(pathAnafi_pitch)
+    ardrone_roll = np.load(pathAnafi_roll)
+   
+    # Ardrone data
+    ardrone_yaw = np.load(pathArdrone_yaw)[variables].tolist()
+    ardrone_yaw.append(ardrone_yaw[0]) # The plot is a circle, so we need to "complete the loop" and append the start value to the end.
+
+    ardrone_pitch = np.load(pathArdrone_pitch)[variables].tolist()
+    ardrone_pitch.append(ardrone_pitch[0]) # The plot is a circle, so we need to "complete the loop" and append the start value to the end.
+
+    ardrone_roll = np.load(pathArdrone_roll)[variables].tolist()
+    ardrone_roll.append(ardrone_roll[0]) # The plot is a circle, so we need to "complete the loop" and append the start value to the end.
+    
+    datalist = [ardrone_yaw,ardrone_roll,ardrone_pitch]
+    axis_name = ['Yaw - Z axis','Roll -  X axis','Pitch - Y axis']
+    colors = ['red','green','blue']
+    
+    for item,label,color in zip(datalist,axis_name,colors):
+        fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(polar=True))
+        ax.set_title('Parrot Anafi\nRadiation Pattern (1m)\n\n{}'.format(label), y=1.08)
+        
+        # Custom label 
+        description = plt.figtext(0.62,0.48,'Signal Strength (dBm)',fontsize=12,fontstyle='oblique',fontweight='bold')
+        description.set_rotation(0)
+    
+        # Custom styling.
+        ax.set_rlabel_position(180 / 180)                           # Change the position angle of the y axis labels
+        ax.tick_params(axis='y', labelsize=12, labelcolor='red')    # Change the y-axis labels size.
+        ax.grid(color='#AAAAAA')                                    # Change the color of the circular gridlines.
+        ax.set_facecolor('#FAFAFA')                                 # Change the background color inside the circle itself.
+        ax.spines['polar'].set_color('#222222')                     # Change the color of the outermost gridline (the spine).
+        ax.set_ylim(-100, -30)
+        
+        # Draw the outline of our data.
+        ax.set_thetagrids(angles)
+        
+        ax.plot(norm_angles, item, color=color, linewidth=1,zorder=1)
+        ax.fill(norm_angles, item, color=color, alpha=0.15)
+        
+        #        im = plt.imread('/home/ros/Downloads/Parrot-ANAFI-PNG-Image-Background.png')
+        im = plt.imread('/home/ros/Pictures/file_stats_gray.png')
+        implot = plt.imshow(im,zorder=2)
+
+        
+        plt.show()
 
 
 
-    ardronePath_off = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/SpatialPinger/NPY/Fix_AR.Drone_2.0_160620_114909@3heights_OFF.npy'
-    ardrone_off = HeatmapVisualiser.from_Path(ardronePath_off,greenhouse, 'AR.Drone 2.0','OFF')
-#    ardrone_off.heatmapAll(groupPlot=True)
 
-    ardronePath_on = '/home/ros/parrot2_ws/src/parrot_ardrone/Connection_quality/src/SpatialPinger/NPY/Fix_AR.Drone_2.0_160620_114909@3heights_ON.npy'
-    ardrone_on = HeatmapVisualiser.from_Path(ardronePath_on,greenhouse, 'AR.Drone 2.0','ON')
-#    ardrone_on.heatmapAll(groupPlot=True)
-
-    ardrone_on_vs_off = HeatmapVisualiser.from_Substruction(ardrone_off,ardrone_on,greenhouse)
-#    ardrone_on_vs_off.heatmapAll(groupPlot=True)
+   ####################################### 
+   ##### GENERATE 3D SPIDER PLOTS ########
+   #######################################
 
 
 
-    ardrone_vs_anafi_off = HeatmapVisualiser.from_Substruction(ardrone_off,anafi_off,greenhouse)
-#    ardrone_vs_anafi_off.heatmapAll(groupPlot=True)
 
-    ardrone_vs_anafi_on = HeatmapVisualiser.from_Substruction(ardrone_on,anafi_on,greenhouse)
-    ardrone_vs_anafi_on.heatmapAll(groupPlot=False)
+
+
+
+
+
+
+
+
 
 
 
