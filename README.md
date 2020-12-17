@@ -67,3 +67,4 @@ NOTE: the following are required:
 
 - sudo apt-get install libspnav-dev (https://github.com/ros-drivers/joystick_drivers/issues/79)
 - sudo apt-get install libsdl2-dev  (https://askubuntu.com/questions/626280/fatal-error-sdl-sdl-h-no-such-file-or-directory)
+- sudo apt-get install python3-empy (https://answers.ros.org/question/257757/importerror-no-module-named-em-error/)
