@@ -69,4 +69,4 @@ NOTE: the following are required:
 - sudo apt-get install libsdl2-dev  (https://askubuntu.com/questions/626280/fatal-error-sdl-sdl-h-no-such-file-or-directory)
 - sudo apt-get install libsdl1.2-dev
 - sudo apt-get install python3-empy (https://answers.ros.org/question/257757/importerror-no-module-named-em-error/)
-- sudo apt-get install ros-noetic-teleop-twist-keyboard
+- sudo apt-get install ros-noetic-teleop-twist-keyboard (FOR ROS NOETIC ONLY)
